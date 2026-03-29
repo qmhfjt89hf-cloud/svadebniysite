@@ -1,0 +1,1546 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>💍 Wedding Invitation Designer Pro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=Dancing+Script:wght@400;700&family=Lora:ital,wght@0,400;0,700;1,400&family=Montserrat:wght@300;400;500;600;700&family=Raleway:wght@300;400;600&family=Josefin+Sans:wght@300;400;600&family=Poiret+One&family=Comfortaa:wght@300;400;700&family=Alex+Brush&family=Sacramento&family=Cinzel:wght@400;700&family=Philosopher:ital,wght@0,400;0,700;1,400&family=Caveat:wght@400;700&family=Parisienne&family=Marck+Script&family=Neucha&family=Tangerine:wght@400;700&family=Amatic+SC:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+--bg0:#0c0c18;--bg1:#12122a;--bg2:#1a1a36;--bg3:#222248;--bg4:#2c2c58;
+--tx1:#eeeef6;--tx2:#a0a0c0;--tx3:#6a6a90;
+--acc:#c9a96e;--acc2:#dbb87d;--rose:#e8b4b8;
+--brd:#28284a;--danger:#e74c3c;--ok:#2ecc71;
+--radius:8px;
+}
+body{font-family:'Montserrat',sans-serif;background:var(--bg0);color:var(--tx1);overflow:hidden;height:100vh;font-size:12px;user-select:none}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--brd);border-radius:3px}
+button{font-family:inherit;cursor:pointer;border:none;outline:none;font-size:12px}
+input,select,textarea{font-family:inherit;font-size:12px;outline:none;border:none}
+#app{display:flex;flex-direction:column;height:100vh}
+
+/* TOOLBAR */
+#toolbar{display:flex;align-items:center;height:44px;background:var(--bg1);border-bottom:1px solid var(--brd);padding:0 12px;flex-shrink:0;z-index:100;gap:6px}
+.toolbar-logo{font-family:'Great Vibes',cursive;font-size:20px;color:var(--acc);margin-right:16px;white-space:nowrap}
+.toolbar-sep{width:1px;height:24px;background:var(--brd);margin:0 6px}
+.tb-btn{background:var(--bg3);color:var(--tx1);padding:6px 12px;border-radius:6px;display:flex;align-items:center;gap:5px;transition:.15s;white-space:nowrap;font-size:11px}
+.tb-btn:hover{background:var(--bg4)}
+.tb-btn.active{background:var(--acc);color:#111}
+.tb-btn.accent{background:var(--acc);color:#111;font-weight:600}
+.tb-btn.accent:hover{background:var(--acc2)}
+.tb-btn.danger{background:var(--danger);color:#fff}
+.tb-spacer{flex:1}
+.tb-zoom{display:flex;align-items:center;gap:4px;color:var(--tx2)}
+.tb-zoom span{min-width:40px;text-align:center}
+
+/* WORKSPACE */
+#workspace{display:flex;flex:1;overflow:hidden}
+
+/* LEFT PANEL */
+#left-panel{width:240px;background:var(--bg1);border-right:1px solid var(--brd);display:flex;flex-direction:column;flex-shrink:0;overflow:hidden}
+.panel-tabs{display:flex;border-bottom:1px solid var(--brd)}
+.panel-tab{flex:1;padding:10px 8px;text-align:center;color:var(--tx2);cursor:pointer;border-bottom:2px solid transparent;transition:.15s;font-size:11px;font-weight:500}
+.panel-tab.active{color:var(--acc);border-bottom-color:var(--acc)}
+.panel-tab:hover{color:var(--tx1)}
+.panel-content{flex:1;overflow-y:auto;padding:10px}
+.panel-section{margin-bottom:14px}
+.panel-section-title{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--tx3);margin-bottom:8px;font-weight:600}
+
+/* Block palette */
+.block-palette{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.block-card{background:var(--bg2);border:1px solid var(--brd);border-radius:var(--radius);padding:10px 6px;text-align:center;cursor:pointer;transition:.15s}
+.block-card:hover{border-color:var(--acc);background:var(--bg3);transform:translateY(-1px)}
+.block-card .icon{font-size:20px;margin-bottom:4px;display:block}
+.block-card .name{font-size:10px;color:var(--tx2)}
+
+/* Layers list */
+.layer-item{display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:6px;cursor:pointer;transition:.12s;margin-bottom:2px}
+.layer-item:hover{background:var(--bg3)}
+.layer-item.selected{background:var(--bg4);border-left:3px solid var(--acc)}
+.layer-item .layer-icon{font-size:14px;width:20px;text-align:center;flex-shrink:0}
+.layer-item .layer-name{flex:1;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--tx2)}
+.layer-item.selected .layer-name{color:var(--tx1)}
+.layer-item .layer-actions{display:flex;gap:2px;opacity:0;transition:.15s}
+.layer-item:hover .layer-actions{opacity:1}
+.layer-btn{background:none;color:var(--tx3);padding:3px;border-radius:4px;font-size:12px;line-height:1}
+.layer-btn:hover{background:var(--bg4);color:var(--tx1)}
+.layer-btn.del:hover{color:var(--danger)}
+
+/* CANVAS AREA */
+#canvas-area{flex:1;background:var(--bg0);display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:30px;position:relative}
+#canvas-wrapper{position:relative;transition:transform .2s}
+#canvas{background:#fff;position:relative;min-height:400px;box-shadow:0 4px 40px rgba(0,0,0,.5);overflow:hidden}
+#canvas.flow-mode .canvas-block{position:relative!important;left:auto!important;top:auto!important}
+#canvas.free-mode{min-height:900px}
+
+/* Canvas blocks */
+.canvas-block{position:relative;cursor:pointer;transition:box-shadow .15s;min-height:10px}
+.canvas-block:hover{box-shadow:inset 0 0 0 1px rgba(201,169,110,.4)}
+.canvas-block.selected{box-shadow:inset 0 0 0 2px var(--acc)!important;z-index:50}
+.canvas-block.editing{z-index:51}
+.block-drag-handle{position:absolute;top:2px;left:2px;width:18px;height:18px;background:var(--acc);border-radius:3px;display:none;align-items:center;justify-content:center;font-size:10px;cursor:grab;z-index:10;color:#111}
+.canvas-block:hover .block-drag-handle,.canvas-block.selected .block-drag-handle{display:flex}
+.block-type-badge{position:absolute;top:2px;right:2px;background:rgba(0,0,0,.5);color:#fff;font-size:9px;padding:1px 5px;border-radius:3px;display:none;z-index:10}
+.canvas-block:hover .block-type-badge,.canvas-block.selected .block-type-badge{display:block}
+
+/* Resize handle */
+.resize-handle{position:absolute;bottom:0;right:0;width:14px;height:14px;cursor:nwse-resize;display:none;z-index:11}
+.resize-handle::after{content:'';position:absolute;bottom:2px;right:2px;width:8px;height:8px;border-right:2px solid var(--acc);border-bottom:2px solid var(--acc)}
+.canvas-block.selected .resize-handle{display:block}
+
+/* Block content styles */
+.block-timer-display{display:flex;gap:16px;justify-content:center;padding:10px}
+.timer-unit{text-align:center}
+.timer-num{font-size:28px;font-weight:700;display:block}
+.timer-label{font-size:10px;text-transform:uppercase;letter-spacing:1px;opacity:.6;margin-top:2px}
+.block-gallery-grid{display:grid;gap:6px;padding:4px}
+.block-gallery-grid img{width:100%;height:150px;object-fit:cover;border-radius:4px}
+.block-divider-line{margin:0 auto}
+.block-button-el{display:inline-block;padding:12px 32px;border-radius:6px;text-decoration:none;font-weight:500;transition:.2s;cursor:pointer;letter-spacing:1px}
+.block-spacer{width:100%}
+.canvas-block[contenteditable="true"]{outline:none}
+
+/* RIGHT PANEL */
+#right-panel{width:280px;background:var(--bg1);border-left:1px solid var(--brd);display:flex;flex-direction:column;flex-shrink:0;overflow:hidden}
+#right-panel-header{padding:10px 12px;border-bottom:1px solid var(--brd);font-weight:600;font-size:12px;color:var(--acc);display:flex;align-items:center;gap:6px}
+#right-panel-body{flex:1;overflow-y:auto;padding:10px}
+.prop-group{margin-bottom:12px;background:var(--bg2);border-radius:var(--radius);overflow:hidden;border:1px solid var(--brd)}
+.prop-group-title{padding:8px 10px;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--tx3);font-weight:700;background:var(--bg3);cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+.prop-group-title::after{content:'▾';font-size:10px}
+.prop-group.collapsed .prop-group-body{display:none}
+.prop-group.collapsed .prop-group-title::after{content:'▸'}
+.prop-group-body{padding:8px}
+.prop-row{margin-bottom:8px;display:flex;flex-direction:column;gap:3px}
+.prop-row.horizontal{flex-direction:row;align-items:center}
+.prop-row.horizontal .prop-label{width:70px;flex-shrink:0}
+.prop-row.horizontal .prop-input,.prop-row.horizontal .prop-select{flex:1}
+.prop-label{font-size:10px;color:var(--tx2);font-weight:500;text-transform:uppercase;letter-spacing:.5px}
+.prop-input,.prop-select,.prop-textarea{background:var(--bg4);color:var(--tx1);padding:6px 8px;border-radius:5px;width:100%;transition:.15s}
+.prop-input:focus,.prop-select:focus,.prop-textarea:focus{box-shadow:0 0 0 1px var(--acc)}
+.prop-textarea{resize:vertical;min-height:50px;font-size:12px;line-height:1.5}
+.prop-select{cursor:pointer;-webkit-appearance:none;padding-right:20px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236a6a90'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center}
+.prop-select option{background:var(--bg3);color:var(--tx1)}
+.prop-color-row{display:flex;gap:6px;align-items:center}
+.prop-color{width:32px;height:32px;border:2px solid var(--brd);border-radius:5px;cursor:pointer;padding:0;flex-shrink:0;background:none}
+.prop-color::-webkit-color-swatch-wrapper{padding:0}
+.prop-color::-webkit-color-swatch{border:none;border-radius:3px}
+.prop-color-text{flex:1}
+.prop-row-inline{display:flex;gap:6px}
+.prop-row-inline>div{flex:1}
+.align-btns{display:flex;gap:3px}
+.align-btn{background:var(--bg4);color:var(--tx2);padding:5px 10px;border-radius:4px;font-size:13px;transition:.1s}
+.align-btn:hover{background:var(--bg3);color:var(--tx1)}
+.align-btn.active{background:var(--acc);color:#111}
+.prop-btn{background:var(--bg4);color:var(--tx1);padding:7px 12px;border-radius:5px;width:100%;text-align:center;transition:.15s;margin-top:4px;font-weight:500}
+.prop-btn:hover{background:var(--bg3)}
+.prop-btn.accent{background:var(--acc);color:#111}
+.prop-btn.accent:hover{background:var(--acc2)}
+.prop-btn.danger{background:transparent;color:var(--danger);border:1px solid var(--danger)}
+.prop-btn.danger:hover{background:var(--danger);color:#fff}
+.empty-state{padding:30px 15px;text-align:center;color:var(--tx3);font-size:11px;line-height:1.6}
+.empty-state .icon{font-size:36px;margin-bottom:10px;display:block}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:.2s}
+.modal-overlay.show{opacity:1;pointer-events:all}
+.modal{background:var(--bg1);border:1px solid var(--brd);border-radius:12px;width:90%;max-width:560px;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.5);transform:translateY(20px);transition:.25s}
+.modal-overlay.show .modal{transform:translateY(0)}
+.modal-header{padding:16px 20px;border-bottom:1px solid var(--brd);display:flex;align-items:center;justify-content:space-between}
+.modal-header h3{font-size:16px;font-weight:600;color:var(--acc)}
+.modal-close{background:none;color:var(--tx3);font-size:20px;padding:4px 8px;border-radius:4px}
+.modal-close:hover{background:var(--bg3);color:var(--tx1)}
+.modal-body{padding:20px;overflow-y:auto;flex:1}
+.modal-footer{padding:12px 20px;border-top:1px solid var(--brd);display:flex;gap:8px;justify-content:flex-end}
+.template-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.template-card{background:var(--bg2);border:2px solid var(--brd);border-radius:var(--radius);padding:12px;cursor:pointer;transition:.15s;text-align:center}
+.template-card:hover{border-color:var(--acc);transform:translateY(-2px)}
+.template-card .preview{height:120px;background:var(--bg3);border-radius:6px;margin-bottom:8px;display:flex;align-items:center;justify-content:center;font-size:32px;overflow:hidden}
+.template-card .tname{font-size:12px;font-weight:600;color:var(--tx1)}
+.template-card .tdesc{font-size:10px;color:var(--tx3);margin-top:2px}
+.saved-templates{margin-top:16px}
+.saved-template-item{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg2);border:1px solid var(--brd);border-radius:6px;margin-bottom:6px;cursor:pointer;transition:.12s}
+.saved-template-item:hover{border-color:var(--acc)}
+.saved-template-item .st-name{flex:1;font-size:12px}
+.saved-template-item .st-del{color:var(--danger);background:none;padding:2px 6px;border-radius:4px;font-size:14px}
+.saved-template-item .st-del:hover{background:rgba(231,76,60,.15)}
+
+/* ANIMATIONS for export */
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideLeft{from{opacity:0;transform:translateX(-30px)}to{opacity:1;transform:translateX(0)}}
+@keyframes slideRight{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}
+@keyframes zoomIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
+
+.anim-fadeIn{animation:fadeIn .8s ease both}
+.anim-slideUp{animation:slideUp .8s ease both}
+.anim-slideLeft{animation:slideLeft .8s ease both}
+.anim-slideRight{animation:slideRight .8s ease both}
+.anim-zoomIn{animation:zoomIn .8s ease both}
+
+/* Toast */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--bg3);color:var(--tx1);padding:10px 24px;border-radius:8px;font-size:12px;z-index:2000;border:1px solid var(--brd);box-shadow:0 8px 30px rgba(0,0,0,.4);opacity:0;transition:.3s;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(-10px)}
+</style>
+</head>
+<body>
+<div id="app">
+  <header id="toolbar">
+    <div class="toolbar-logo">Wedding Designer</div>
+    <div class="toolbar-sep"></div>
+    <button class="tb-btn" id="btn-layout" onclick="toggleLayout()" title="Режим раскладки">📐 <span id="layout-label">Поток</span></button>
+    <div class="toolbar-sep"></div>
+    <button class="tb-btn" onclick="undo()" title="Отменить (Ctrl+Z)">↩</button>
+    <button class="tb-btn" onclick="redo()" title="Повторить (Ctrl+Y)">↪</button>
+    <div class="toolbar-sep"></div>
+    <div class="tb-zoom">
+      <button class="tb-btn" onclick="changeZoom(-10)">−</button>
+      <span id="zoom-label">100%</span>
+      <button class="tb-btn" onclick="changeZoom(10)">+</button>
+    </div>
+    <span class="tb-spacer"></span>
+    <button class="tb-btn" onclick="showTemplatesModal()">📋 Шаблоны</button>
+    <button class="tb-btn" onclick="randomizeDesign()">🎲 Рандом</button>
+    <div class="toolbar-sep"></div>
+    <button class="tb-btn" onclick="saveProjectFile()">💾 Сохранить</button>
+    <button class="tb-btn" onclick="loadProjectFile()">📂 Загрузить</button>
+    <div class="toolbar-sep"></div>
+    <button class="tb-btn accent" onclick="exportHTML()">🚀 Экспорт HTML</button>
+  </header>
+  <div id="workspace">
+    <aside id="left-panel">
+      <div class="panel-tabs">
+        <div class="panel-tab active" data-tab="blocks" onclick="switchLeftTab('blocks')">Блоки</div>
+        <div class="panel-tab" data-tab="layers" onclick="switchLeftTab('layers')">Слои</div>
+      </div>
+      <div class="panel-content" id="left-blocks-tab"></div>
+      <div class="panel-content" id="left-layers-tab" style="display:none"></div>
+    </aside>
+    <main id="canvas-area">
+      <div id="canvas-wrapper">
+        <div id="canvas" class="flow-mode"></div>
+      </div>
+    </main>
+    <aside id="right-panel">
+      <div id="right-panel-header">⚙ Свойства</div>
+      <div id="right-panel-body"></div>
+    </aside>
+  </div>
+</div>
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal" id="modal"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ===================== CONFIGURATION =====================
+const FONTS = [
+  'Montserrat','Playfair Display','Great Vibes','Cormorant Garamond','Dancing Script',
+  'Lora','Raleway','Josefin Sans','Poiret One','Comfortaa','Alex Brush','Sacramento',
+  'Cinzel','Philosopher','Caveat','Parisienne','Marck Script','Neucha','Tangerine','Amatic SC'
+];
+
+const FONT_WEIGHTS = [
+  {value:'300',label:'Light'},{value:'400',label:'Regular'},
+  {value:'500',label:'Medium'},{value:'600',label:'SemiBold'},{value:'700',label:'Bold'}
+];
+
+const ANIMATIONS = [
+  {value:'none',label:'Нет'},{value:'fadeIn',label:'Появление'},
+  {value:'slideUp',label:'Снизу вверх'},{value:'slideLeft',label:'Слева'},
+  {value:'slideRight',label:'Справа'},{value:'zoomIn',label:'Увеличение'}
+];
+
+const DIVIDER_STYLES = [
+  {value:'solid',label:'Сплошная'},{value:'dashed',label:'Пунктир'},
+  {value:'dotted',label:'Точки'},{value:'double',label:'Двойная'}
+];
+
+const BLOCK_DEFS = {
+  heading:{name:'Заголовок',icon:'✨',
+    defaults:{content:{text:'Заголовок'},style:{fontFamily:'Playfair Display',fontSize:42,fontWeight:'700',color:'#333333',textAlign:'center',padding:20,lineHeight:1.3,letterSpacing:1}}},
+  text:{name:'Текст',icon:'📝',
+    defaults:{content:{text:'Введите текст приглашения. Мы рады пригласить вас на наше торжество.'},style:{fontFamily:'Lora',fontSize:16,fontWeight:'400',color:'#555555',textAlign:'center',padding:16,lineHeight:1.7,letterSpacing:0}}},
+  names:{name:'Имена',icon:'💑',
+    defaults:{content:{text:'Анна & Михаил'},style:{fontFamily:'Great Vibes',fontSize:56,fontWeight:'400',color:'#c9a96e',textAlign:'center',padding:24,lineHeight:1.2,letterSpacing:2}}},
+  date:{name:'Дата',icon:'📅',
+    defaults:{content:{text:'15 июня 2025 года'},style:{fontFamily:'Montserrat',fontSize:20,fontWeight:'300',color:'#666666',textAlign:'center',padding:12,lineHeight:1.5,letterSpacing:3,textTransform:'uppercase'}}},
+  venue:{name:'Место',icon:'📍',
+    defaults:{content:{text:'Ресторан «Усадьба»\nМосква, ул. Пушкина, 10\nНачало в 16:00'},style:{fontFamily:'Cormorant Garamond',fontSize:18,fontWeight:'400',color:'#555555',textAlign:'center',padding:20,lineHeight:1.8,letterSpacing:0}}},
+  image:{name:'Изображение',icon:'🖼️',
+    defaults:{content:{src:'https://images.unsplash.com/photo-1519741497674-611481863552?w=600&h=400&fit=crop',alt:'Wedding photo',objectFit:'cover'},style:{padding:0,borderRadius:0,maxHeight:400}}},
+  gallery:{name:'Галерея',icon:'📸',
+    defaults:{content:{images:['https://images.unsplash.com/photo-1519741497674-611481863552?w=300&h=300&fit=crop','https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=300&h=300&fit=crop','https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?w=300&h=300&fit=crop'],columns:3},style:{padding:10,gap:8}}},
+  timer:{name:'Таймер',icon:'⏳',
+    defaults:{content:{targetDate:'2025-06-15T16:00:00',labels:['дней','часов','минут','секунд']},style:{fontFamily:'Montserrat',fontSize:28,fontWeight:'700',color:'#333333',backgroundColor:'transparent',padding:24,textAlign:'center'}}},
+  divider:{name:'Разделитель',icon:'〰️',
+    defaults:{content:{dividerStyle:'solid',widthPercent:40,thickness:1,ornament:'none'},style:{color:'#cccccc',padding:16}}},
+  button:{name:'Кнопка',icon:'🔘',
+    defaults:{content:{text:'Подтвердить участие',link:'#'},style:{fontFamily:'Montserrat',fontSize:14,fontWeight:'500',color:'#ffffff',backgroundColor:'#333333',padding:16,textAlign:'center',borderRadius:6,letterSpacing:2,textTransform:'uppercase'}}},
+  spacer:{name:'Отступ',icon:'↕️',
+    defaults:{content:{height:40},style:{}}},
+  custom:{name:'HTML блок',icon:'🔧',
+    defaults:{content:{html:'<div style="text-align:center;padding:20px;color:#999;">Кастомный HTML</div>'},style:{padding:0}}}
+};
+
+const PALETTES = [
+  {name:'Классика',bg:'#ffffff',primary:'#222222',secondary:'#c9a96e',accent:'#555555',font1:'Playfair Display',font2:'Montserrat'},
+  {name:'Розовый сад',bg:'#fdf6f0',primary:'#5c4033',secondary:'#c9856b',accent:'#8b6f5f',font1:'Great Vibes',font2:'Lora'},
+  {name:'Изумруд',bg:'#f5f9f5',primary:'#2d4a3e',secondary:'#6b8f71',accent:'#4a6b5a',font1:'Cormorant Garamond',font2:'Raleway'},
+  {name:'Лаванда',bg:'#f8f5ff',primary:'#4a3f6b',secondary:'#8b7bae',accent:'#6b5f8f',font1:'Philosopher',font2:'Josefin Sans'},
+  {name:'Темный люкс',bg:'#1a1a2e',primary:'#e8e8f0',secondary:'#c9a96e',accent:'#a090b0',font1:'Cinzel',font2:'Montserrat'},
+  {name:'Минимал',bg:'#ffffff',primary:'#111111',secondary:'#999999',accent:'#cccccc',font1:'Josefin Sans',font2:'Montserrat'},
+  {name:'Персик',bg:'#fff5ee',primary:'#6b4226',secondary:'#e8a87c',accent:'#d4856b',font1:'Dancing Script',font2:'Comfortaa'},
+  {name:'Синий',bg:'#f0f4f8',primary:'#1a365d',secondary:'#4a7cb5',accent:'#2b5797',font1:'Playfair Display',font2:'Raleway'},
+];
+
+// ===================== STATE =====================
+let state = {
+  blocks: [],
+  selectedId: null,
+  layoutMode: 'flow',
+  canvas: {width:600,background:'#ffffff',backgroundImage:'',padding:0},
+  zoom: 100,
+  projectName: 'Мое приглашение'
+};
+
+let history = [];
+let historyIndex = -1;
+let timerInterval = null;
+
+// ===================== UTILITY =====================
+function uid(){return 'b_'+Math.random().toString(36).substr(2,9)+'_'+Date.now().toString(36)}
+function deepClone(o){return JSON.parse(JSON.stringify(o))}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200)}
+function saveHistory(){
+  history = history.slice(0,historyIndex+1);
+  history.push(deepClone(state));
+  if(history.length>50)history.shift();
+  historyIndex = history.length-1;
+}
+function undo(){if(historyIndex>0){historyIndex--;state=deepClone(history[historyIndex]);fullRender();toast('↩ Отменено')}}
+function redo(){if(historyIndex<history.length-1){historyIndex++;state=deepClone(history[historyIndex]);fullRender();toast('↪ Повторено')}}
+function getBlock(id){return state.blocks.find(b=>b.id===id)}
+function getBlockIndex(id){return state.blocks.findIndex(b=>b.id===id)}
+
+// ===================== STATE MANAGEMENT =====================
+function addBlock(type,insertIndex=-1){
+  const def = BLOCK_DEFS[type];
+  if(!def)return;
+  const block = {
+    id: uid(),
+    type: type,
+    content: deepClone(def.defaults.content),
+    style: deepClone(def.defaults.style),
+    visible: true,
+    locked: false,
+    x: 50, y: (state.blocks.length*80)+50,
+    w: type==='spacer'?'100%':(type==='image'||type==='gallery'?'100%':'100%'),
+    h: 'auto'
+  };
+  if(insertIndex>=0)state.blocks.splice(insertIndex,0,block);
+  else state.blocks.push(block);
+  state.selectedId = block.id;
+  saveHistory();
+  fullRender();
+  autoSave();
+  toast(`✅ ${def.name} добавлен`);
+  return block;
+}
+
+function removeBlock(id){
+  const idx = getBlockIndex(id);
+  if(idx<0)return;
+  state.blocks.splice(idx,1);
+  if(state.selectedId===id)state.selectedId=null;
+  saveHistory();
+  fullRender();
+  autoSave();
+  toast('🗑️ Блок удалён');
+}
+
+function duplicateBlock(id){
+  const src = getBlock(id);
+  if(!src)return;
+  const dup = deepClone(src);
+  dup.id = uid();
+  dup.y += 20;
+  dup.x += 20;
+  const idx = getBlockIndex(id);
+  state.blocks.splice(idx+1,0,dup);
+  state.selectedId = dup.id;
+  saveHistory();
+  fullRender();
+  autoSave();
+  toast('📋 Блок дублирован');
+}
+
+function selectBlock(id){
+  state.selectedId=id;
+  renderCanvas();
+  renderLayers();
+  renderProperties();
+}
+
+function updateBlockContent(id,key,val){
+  const b=getBlock(id);if(!b)return;
+  b.content[key]=val;
+  renderCanvas();
+  autoSave();
+}
+
+function updateBlockStyle(id,key,val){
+  const b=getBlock(id);if(!b)return;
+  b.style[key]=val;
+  renderCanvas();
+  autoSave();
+}
+
+function updateBlockPos(id,key,val){
+  const b=getBlock(id);if(!b)return;
+  b[key]=val;
+  renderCanvas();
+  autoSave();
+}
+
+function moveBlockUp(id){
+  const i=getBlockIndex(id);
+  if(i<=0)return;
+  [state.blocks[i-1],state.blocks[i]]=[state.blocks[i],state.blocks[i-1]];
+  saveHistory();fullRender();autoSave();
+}
+
+function moveBlockDown(id){
+  const i=getBlockIndex(id);
+  if(i<0||i>=state.blocks.length-1)return;
+  [state.blocks[i],state.blocks[i+1]]=[state.blocks[i+1],state.blocks[i]];
+  saveHistory();fullRender();autoSave();
+}
+
+// ===================== RENDERING =====================
+function fullRender(){
+  renderToolbar();
+  renderBlockPalette();
+  renderLayers();
+  renderCanvas();
+  renderProperties();
+}
+
+function renderToolbar(){
+  document.getElementById('layout-label').textContent=state.layoutMode==='flow'?'Поток':'Свободный';
+  document.getElementById('btn-layout').classList.toggle('active',state.layoutMode==='free');
+  document.getElementById('zoom-label').textContent=state.zoom+'%';
+}
+
+function toggleLayout(){
+  state.layoutMode=state.layoutMode==='flow'?'free':'flow';
+  saveHistory();
+  fullRender();
+  autoSave();
+}
+
+function changeZoom(delta){
+  state.zoom=Math.max(30,Math.min(200,state.zoom+delta));
+  renderToolbar();
+  const w=document.getElementById('canvas-wrapper');
+  w.style.transform=`scale(${state.zoom/100})`;
+  w.style.transformOrigin='top center';
+}
+
+// ---- Left Panel ----
+function switchLeftTab(tab){
+  document.querySelectorAll('.panel-tab').forEach(t=>{t.classList.toggle('active',t.dataset.tab===tab)});
+  document.getElementById('left-blocks-tab').style.display=tab==='blocks'?'':'none';
+  document.getElementById('left-layers-tab').style.display=tab==='layers'?'':'none';
+}
+
+function renderBlockPalette(){
+  const c=document.getElementById('left-blocks-tab');
+  let html='<div class="panel-section"><div class="panel-section-title">Добавить блок</div><div class="block-palette">';
+  for(const[type,def]of Object.entries(BLOCK_DEFS)){
+    html+=`<div class="block-card" onclick="addBlock('${type}')" title="${def.name}"><span class="icon">${def.icon}</span><span class="name">${def.name}</span></div>`;
+  }
+  html+='</div></div>';
+  c.innerHTML=html;
+}
+
+function renderLayers(){
+  const c=document.getElementById('left-layers-tab');
+  if(!state.blocks.length){c.innerHTML='<div class="empty-state"><span class="icon">📭</span>Нет блоков<br>Добавьте блоки из вкладки «Блоки»</div>';return}
+  let html='<div class="panel-section"><div class="panel-section-title">Слои ('+state.blocks.length+')</div>';
+  for(let i=state.blocks.length-1;i>=0;i--){
+    const b=state.blocks[i];
+    const def=BLOCK_DEFS[b.type]||{icon:'📦',name:b.type};
+    const sel=state.selectedId===b.id?'selected':'';
+    const preview=b.content.text?(b.content.text.substring(0,20)+(b.content.text.length>20?'…':'')):def.name;
+    html+=`<div class="layer-item ${sel}" onclick="selectBlock('${b.id}')">
+      <span class="layer-icon">${def.icon}</span>
+      <span class="layer-name" title="${preview}">${preview}</span>
+      <div class="layer-actions">
+        <button class="layer-btn" onclick="event.stopPropagation();moveBlockUp('${b.id}')" title="Вверх">↑</button>
+        <button class="layer-btn" onclick="event.stopPropagation();moveBlockDown('${b.id}')" title="Вниз">↓</button>
+        <button class="layer-btn" onclick="event.stopPropagation();duplicateBlock('${b.id}')" title="Дублировать">📋</button>
+        <button class="layer-btn del" onclick="event.stopPropagation();removeBlock('${b.id}')" title="Удалить">✕</button>
+      </div>
+    </div>`;
+  }
+  html+='</div>';
+  c.innerHTML=html;
+}
+
+// ---- Canvas ----
+function renderCanvas(){
+  const canvas=document.getElementById('canvas');
+  canvas.className=state.layoutMode==='flow'?'flow-mode':'free-mode';
+  canvas.style.width=state.canvas.width+'px';
+  canvas.style.background=state.canvas.background;
+  if(state.canvas.backgroundImage)canvas.style.backgroundImage=`url(${state.canvas.backgroundImage})`;
+  else canvas.style.backgroundImage='none';
+  canvas.style.backgroundSize='cover';
+  canvas.style.backgroundPosition='center';
+  canvas.style.padding=state.canvas.padding+'px';
+
+  let html='';
+  state.blocks.forEach((block,idx)=>{
+    if(!block.visible&&block.visible!==undefined&&block.visible===false)return;
+    html+=renderBlockHTML(block,idx);
+  });
+  canvas.innerHTML=html;
+
+  // Attach events
+  canvas.querySelectorAll('.canvas-block').forEach(el=>{
+    const id=el.dataset.id;
+    el.addEventListener('click',(e)=>{e.stopPropagation();selectBlock(id)});
+    el.addEventListener('dblclick',(e)=>{
+      const b=getBlock(id);
+      if(b&&(b.type==='text'||b.type==='heading'||b.type==='names'||b.type==='date'||b.type==='venue')){
+        startInlineEdit(el,b);
+      }
+    });
+    if(state.layoutMode==='free'){
+      const handle=el.querySelector('.block-drag-handle');
+      if(handle)handle.addEventListener('mousedown',(e)=>startFreeDrag(e,id));
+      const resizeH=el.querySelector('.resize-handle');
+      if(resizeH)resizeH.addEventListener('mousedown',(e)=>startResize(e,id));
+    }
+  });
+
+  // Flow mode sortable
+  if(state.layoutMode==='flow'&&typeof Sortable!=='undefined'){
+    if(canvas._sortable)canvas._sortable.destroy();
+    canvas._sortable=Sortable.create(canvas,{
+      animation:150,
+      handle:'.block-drag-handle',
+      ghostClass:'sortable-ghost',
+      onEnd:(evt)=>{
+        const item=state.blocks.splice(evt.oldIndex,1)[0];
+        state.blocks.splice(evt.newIndex,0,item);
+        saveHistory();
+        fullRender();
+        autoSave();
+      }
+    });
+  }
+
+  // Click on canvas bg deselects
+  canvas.addEventListener('click',(e)=>{
+    if(e.target===canvas){state.selectedId=null;renderLayers();renderProperties();renderCanvas();}
+  });
+
+  updateTimers();
+}
+
+function renderBlockHTML(block, idx){
+  const s=block.style||{};
+  const sel=state.selectedId===block.id?'selected':'';
+  const def=BLOCK_DEFS[block.type]||{name:block.type};
+
+  let posStyle='';
+  if(state.layoutMode==='free'){
+    posStyle=`position:absolute;left:${block.x||0}px;top:${block.y||0}px;`;
+    if(block.w)posStyle+=`width:${typeof block.w==='number'?block.w+'px':block.w};`;
+  }
+
+  let blockStyle=posStyle;
+  if(s.padding!==undefined)blockStyle+=`padding:${s.padding}px;`;
+  if(s.backgroundColor&&s.backgroundColor!=='transparent')blockStyle+=`background-color:${s.backgroundColor};`;
+  if(s.borderRadius)blockStyle+=`border-radius:${s.borderRadius}px;`;
+  if(s.opacity!==undefined&&s.opacity!==1)blockStyle+=`opacity:${s.opacity};`;
+  if(s.borderWidth)blockStyle+=`border:${s.borderWidth}px solid ${s.borderColor||'#ccc'};`;
+  if(s.marginTop)blockStyle+=`margin-top:${s.marginTop}px;`;
+  if(s.marginBottom)blockStyle+=`margin-bottom:${s.marginBottom}px;`;
+
+  const animClass=s.animation&&s.animation!=='none'?`anim-${s.animation}`:'';
+
+  let inner='';
+  switch(block.type){
+    case 'heading': case 'text': case 'names': case 'date': case 'venue':
+      inner=renderTextContent(block);break;
+    case 'image':
+      inner=renderImageContent(block);break;
+    case 'gallery':
+      inner=renderGalleryContent(block);break;
+    case 'timer':
+      inner=renderTimerContent(block);break;
+    case 'divider':
+      inner=renderDividerContent(block);break;
+    case 'button':
+      inner=renderButtonContent(block);break;
+    case 'spacer':
+      inner=`<div class="block-spacer" style="height:${block.content.height||40}px"></div>`;break;
+    case 'custom':
+      inner=block.content.html||'';break;
+    default:
+      inner=`<div style="padding:20px;color:#999;text-align:center">[${block.type}]</div>`;
+  }
+
+  return `<div class="canvas-block ${sel} ${animClass}" data-id="${block.id}" data-type="${block.type}" style="${blockStyle}">
+    <div class="block-drag-handle" title="Перетащить">⠿</div>
+    <span class="block-type-badge">${def.name}</span>
+    <div class="resize-handle"></div>
+    ${inner}
+  </div>`;
+}
+
+function renderTextContent(block){
+  const s=block.style||{};
+  let style=`font-family:'${s.fontFamily||'Montserrat'}',sans-serif;font-size:${s.fontSize||16}px;font-weight:${s.fontWeight||'400'};color:${s.color||'#333'};text-align:${s.textAlign||'center'};line-height:${s.lineHeight||1.6};letter-spacing:${s.letterSpacing||0}px;`;
+  if(s.fontStyle)style+=`font-style:${s.fontStyle};`;
+  if(s.textTransform)style+=`text-transform:${s.textTransform};`;
+  const text=(block.content.text||'').replace(/\n/g,'<br>');
+  return `<div class="block-text-content" style="${style}">${text}</div>`;
+}
+
+function renderImageContent(block){
+  const c=block.content||{};
+  const s=block.style||{};
+  let imgStyle=`width:100%;display:block;object-fit:${c.objectFit||'cover'};`;
+  if(s.borderRadius)imgStyle+=`border-radius:${s.borderRadius}px;`;
+  if(s.maxHeight)imgStyle+=`max-height:${s.maxHeight}px;`;
+  return `<img src="${c.src||''}" alt="${c.alt||''}" style="${imgStyle}" onerror="this.style.background='#eee';this.style.minHeight='100px'">`;
+}
+
+function renderGalleryContent(block){
+  const c=block.content||{};
+  const s=block.style||{};
+  const cols=c.columns||3;
+  const gap=s.gap||8;
+  let html=`<div class="block-gallery-grid" style="grid-template-columns:repeat(${cols},1fr);gap:${gap}px">`;
+  (c.images||[]).forEach(src=>{
+    html+=`<img src="${src}" alt="Gallery" onerror="this.style.background='#eee';this.style.minHeight='80px'">`;
+  });
+  html+='</div>';
+  return html;
+}
+
+function renderTimerContent(block){
+  const c=block.content||{};
+  const s=block.style||{};
+  const labels=c.labels||['дней','часов','минут','секунд'];
+  let style=`font-family:'${s.fontFamily||'Montserrat'}',sans-serif;color:${s.color||'#333'};`;
+  return `<div class="block-timer-display" data-target="${c.targetDate||''}" style="${style}">
+    <div class="timer-unit"><span class="timer-num" style="font-size:${s.fontSize||28}px;font-weight:${s.fontWeight||'700'}">--</span><span class="timer-label">${labels[0]}</span></div>
+    <div class="timer-unit"><span class="timer-num" style="font-size:${s.fontSize||28}px;font-weight:${s.fontWeight||'700'}">--</span><span class="timer-label">${labels[1]}</span></div>
+    <div class="timer-unit"><span class="timer-num" style="font-size:${s.fontSize||28}px;font-weight:${s.fontWeight||'700'}">--</span><span class="timer-label">${labels[2]}</span></div>
+    <div class="timer-unit"><span class="timer-num" style="font-size:${s.fontSize||28}px;font-weight:${s.fontWeight||'700'}">--</span><span class="timer-label">${labels[3]}</span></div>
+  </div>`;
+}
+
+function renderDividerContent(block){
+  const c=block.content||{};
+  const s=block.style||{};
+  const w=c.widthPercent||40;
+  const thick=c.thickness||1;
+  const ds=c.dividerStyle||'solid';
+  const color=s.color||'#cccccc';
+  let ornament='';
+  if(c.ornament==='heart')ornament='<span style="display:block;text-align:center;font-size:16px;margin:-10px 0;position:relative;z-index:1">♥</span>';
+  else if(c.ornament==='diamond')ornament='<span style="display:block;text-align:center;font-size:14px;margin:-10px 0;position:relative;z-index:1">◆</span>';
+  else if(c.ornament==='star')ornament='<span style="display:block;text-align:center;font-size:14px;margin:-10px 0;position:relative;z-index:1">✦</span>';
+  else if(c.ornament==='leaf')ornament='<span style="display:block;text-align:center;font-size:16px;margin:-12px 0;position:relative;z-index:1">🌿</span>';
+  return `<div style="text-align:center"><hr class="block-divider-line" style="width:${w}%;border:none;border-top:${thick}px ${ds} ${color}">${ornament}</div>`;
+}
+
+function renderButtonContent(block){
+  const c=block.content||{};
+  const s=block.style||{};
+  let btnStyle=`font-family:'${s.fontFamily||'Montserrat'}',sans-serif;font-size:${s.fontSize||14}px;font-weight:${s.fontWeight||'500'};color:${s.color||'#fff'};background:${s.backgroundColor||'#333'};border-radius:${s.borderRadius||6}px;letter-spacing:${s.letterSpacing||2}px;`;
+  if(s.textTransform)btnStyle+=`text-transform:${s.textTransform};`;
+  if(s.borderWidth)btnStyle+=`border:${s.borderWidth}px solid ${s.borderColor||s.color||'#fff'};`;
+  return `<div style="text-align:${s.textAlign||'center'}"><span class="block-button-el" style="${btnStyle}">${c.text||'Кнопка'}</span></div>`;
+}
+
+function updateTimers(){
+  document.querySelectorAll('.block-timer-display').forEach(el=>{
+    const target=el.dataset.target;
+    if(!target)return;
+    const diff=new Date(target)-new Date();
+    if(diff<=0){el.querySelectorAll('.timer-num').forEach(n=>n.textContent='0');return}
+    const d=Math.floor(diff/86400000);
+    const h=Math.floor((diff%86400000)/3600000);
+    const m=Math.floor((diff%3600000)/60000);
+    const sec=Math.floor((diff%60000)/1000);
+    const nums=el.querySelectorAll('.timer-num');
+    if(nums[0])nums[0].textContent=d;
+    if(nums[1])nums[1].textContent=h;
+    if(nums[2])nums[2].textContent=m;
+    if(nums[3])nums[3].textContent=sec;
+  });
+}
+
+// ---- Inline Edit ----
+function startInlineEdit(el,block){
+  const textEl=el.querySelector('.block-text-content');
+  if(!textEl)return;
+  el.classList.add('editing');
+  textEl.contentEditable='true';
+  textEl.focus();
+  textEl.style.outline='2px dashed var(--acc)';
+  textEl.style.outlineOffset='2px';
+  textEl.style.minHeight='30px';
+
+  const finish=()=>{
+    textEl.contentEditable='false';
+    textEl.style.outline='none';
+    textEl.style.outlineOffset='0';
+    el.classList.remove('editing');
+    const newText=textEl.innerHTML.replace(/<br\s*\/?>/gi,'\n').replace(/<[^>]+>/g,'').trim();
+    block.content.text=newText;
+    saveHistory();
+    autoSave();
+    renderProperties();
+  };
+
+  textEl.addEventListener('blur',finish,{once:true});
+  textEl.addEventListener('keydown',(e)=>{
+    if(e.key==='Escape'){textEl.blur()}
+  });
+}
+
+// ---- Free Drag ----
+let dragInfo=null;
+function startFreeDrag(e,blockId){
+  e.preventDefault();e.stopPropagation();
+  const block=getBlock(blockId);if(!block)return;
+  const scale=state.zoom/100;
+  dragInfo={blockId,startX:e.clientX,startY:e.clientY,origX:block.x||0,origY:block.y||0,scale};
+  document.addEventListener('mousemove',onFreeDrag);
+  document.addEventListener('mouseup',endFreeDrag);
+}
+function onFreeDrag(e){
+  if(!dragInfo)return;
+  const dx=(e.clientX-dragInfo.startX)/dragInfo.scale;
+  const dy=(e.clientY-dragInfo.startY)/dragInfo.scale;
+  const block=getBlock(dragInfo.blockId);
+  if(!block)return;
+  block.x=Math.round(dragInfo.origX+dx);
+  block.y=Math.round(dragInfo.origY+dy);
+  const el=document.querySelector(`.canvas-block[data-id="${dragInfo.blockId}"]`);
+  if(el){el.style.left=block.x+'px';el.style.top=block.y+'px'}
+}
+function endFreeDrag(){
+  if(dragInfo){saveHistory();autoSave();renderProperties()}
+  dragInfo=null;
+  document.removeEventListener('mousemove',onFreeDrag);
+  document.removeEventListener('mouseup',endFreeDrag);
+}
+
+// ---- Resize ----
+let resizeInfo=null;
+function startResize(e,blockId){
+  e.preventDefault();e.stopPropagation();
+  const block=getBlock(blockId);if(!block)return;
+  const el=document.querySelector(`.canvas-block[data-id="${blockId}"]`);
+  if(!el)return;
+  const scale=state.zoom/100;
+  resizeInfo={blockId,startX:e.clientX,startY:e.clientY,origW:el.offsetWidth,origH:el.offsetHeight,scale};
+  document.addEventListener('mousemove',onResize);
+  document.addEventListener('mouseup',endResize);
+}
+function onResize(e){
+  if(!resizeInfo)return;
+  const dx=(e.clientX-resizeInfo.startX)/resizeInfo.scale;
+  const dy=(e.clientY-resizeInfo.startY)/resizeInfo.scale;
+  const block=getBlock(resizeInfo.blockId);if(!block)return;
+  block.w=Math.max(100,Math.round(resizeInfo.origW+dx));
+  const el=document.querySelector(`.canvas-block[data-id="${resizeInfo.blockId}"]`);
+  if(el){el.style.width=block.w+'px'}
+}
+function endResize(){
+  if(resizeInfo){saveHistory();autoSave();renderProperties()}
+  resizeInfo=null;
+  document.removeEventListener('mousemove',onResize);
+  document.removeEventListener('mouseup',endResize);
+}
+
+// ===================== PROPERTIES PANEL =====================
+function renderProperties(){
+  const panel=document.getElementById('right-panel-body');
+  const header=document.getElementById('right-panel-header');
+  if(!state.selectedId){
+    header.innerHTML='⚙ Настройки холста';
+    renderCanvasProps(panel);
+    return;
+  }
+  const block=getBlock(state.selectedId);
+  if(!block){header.innerHTML='⚙ Свойства';panel.innerHTML='';return}
+  const def=BLOCK_DEFS[block.type]||{name:block.type,icon:'📦'};
+  header.innerHTML=`${def.icon} ${def.name}`;
+  panel.innerHTML='';
+
+  // Content props
+  renderContentProps(panel,block);
+  // Typography (for text blocks)
+  if(['heading','text','names','date','venue','button','timer'].includes(block.type)){
+    renderTypographyProps(panel,block);
+  }
+  // Background
+  renderBackgroundProps(panel,block);
+  // Spacing
+  renderSpacingProps(panel,block);
+  // Border
+  renderBorderProps(panel,block);
+  // Effects
+  renderEffectsProps(panel,block);
+  // Position (free mode)
+  if(state.layoutMode==='free')renderPositionProps(panel,block);
+  // Actions
+  renderActionsProps(panel,block);
+}
+
+function createPropGroup(title,collapsed){
+  const g=document.createElement('div');
+  g.className='prop-group'+(collapsed?' collapsed':'');
+  const t=document.createElement('div');
+  t.className='prop-group-title';
+  t.textContent=title;
+  t.onclick=()=>g.classList.toggle('collapsed');
+  const b=document.createElement('div');
+  b.className='prop-group-body';
+  g.appendChild(t);g.appendChild(b);
+  return{group:g,body:b};
+}
+
+function addRow(parent,label,input,horizontal=true){
+  const r=document.createElement('div');
+  r.className='prop-row'+(horizontal?' horizontal':'');
+  if(label){const l=document.createElement('label');l.className='prop-label';l.textContent=label;r.appendChild(l)}
+  if(input)r.appendChild(input);
+  parent.appendChild(r);
+  return r;
+}
+
+function makeInput(type,val,onChange,attrs={}){
+  const inp=document.createElement('input');
+  inp.type=type;inp.value=val!=null?val:'';inp.className='prop-input';
+  Object.entries(attrs).forEach(([k,v])=>inp.setAttribute(k,v));
+  inp.addEventListener('input',e=>{
+    let v=e.target.value;
+    if(type==='number')v=parseFloat(v)||0;
+    onChange(v);
+  });
+  if(type==='number')inp.addEventListener('change',e=>onChange(parseFloat(e.target.value)||0));
+  return inp;
+}
+
+function makeSelect(options,val,onChange){
+  const sel=document.createElement('select');sel.className='prop-select';
+  options.forEach(o=>{
+    const opt=document.createElement('option');
+    if(typeof o==='object'){opt.value=o.value;opt.textContent=o.label}
+    else{opt.value=o;opt.textContent=o}
+    sel.appendChild(opt);
+  });
+  sel.value=val||'';
+  sel.addEventListener('change',e=>onChange(e.target.value));
+  return sel;
+}
+
+function makeTextarea(val,onChange,rows=3){
+  const ta=document.createElement('textarea');
+  ta.className='prop-textarea';ta.rows=rows;ta.value=val||'';
+  ta.addEventListener('input',e=>onChange(e.target.value));
+  return ta;
+}
+
+function makeColorRow(val,onChange){
+  const d=document.createElement('div');d.className='prop-color-row';
+  const c=document.createElement('input');c.type='color';c.className='prop-color';c.value=val||'#000000';
+  const t=document.createElement('input');t.type='text';t.className='prop-input prop-color-text';t.value=val||'#000000';
+  c.addEventListener('input',e=>{t.value=e.target.value;onChange(e.target.value)});
+  t.addEventListener('input',e=>{if(/^#[0-9a-fA-F]{3,8}$/.test(e.target.value)){c.value=e.target.value;onChange(e.target.value)}});
+  d.appendChild(c);d.appendChild(t);
+  return d;
+}
+
+function makeAlignBtns(val,onChange){
+  const d=document.createElement('div');d.className='align-btns';
+  [{v:'left',l:'◧'},{v:'center',l:'◫'},{v:'right',l:'◨'},{v:'justify',l:'☰'}].forEach(a=>{
+    const btn=document.createElement('button');btn.className='align-btn'+(val===a.v?' active':'');
+    btn.textContent=a.l;btn.title=a.v;
+    btn.onclick=()=>{onChange(a.v);renderProperties()};
+    d.appendChild(btn);
+  });
+  return d;
+}
+
+// ---- Content Props ----
+function renderContentProps(panel,block){
+  const{group,body}=createPropGroup('Контент');
+
+  switch(block.type){
+    case 'heading':case 'text':case 'names':case 'date':case 'venue':
+      addRow(body,null,makeTextarea(block.content.text,(v)=>{updateBlockContent(block.id,'text',v);renderCanvas()},4),false);
+      break;
+    case 'image':
+      addRow(body,'URL',makeInput('text',block.content.src,(v)=>{updateBlockContent(block.id,'src',v);renderCanvas()}));
+      const uploadBtn=document.createElement('button');uploadBtn.className='prop-btn';uploadBtn.textContent='📁 Загрузить файл';
+      uploadBtn.onclick=()=>{const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{updateBlockContent(block.id,'src',ev.target.result);renderCanvas();renderProperties()};r.readAsDataURL(f)};inp.click()};
+      body.appendChild(uploadBtn);
+      addRow(body,'Alt',makeInput('text',block.content.alt,(v)=>updateBlockContent(block.id,'alt',v)));
+      addRow(body,'Fit',makeSelect([{value:'cover',label:'Cover'},{value:'contain',label:'Contain'},{value:'fill',label:'Fill'}],block.content.objectFit,(v)=>{updateBlockContent(block.id,'objectFit',v);renderCanvas()}));
+      break;
+    case 'gallery':
+      const ta=makeTextarea((block.content.images||[]).join('\n'),(v)=>{updateBlockContent(block.id,'images',v.split('\n').filter(s=>s.trim()));renderCanvas()},5);
+      ta.placeholder='По одному URL на строку';
+      addRow(body,null,ta,false);
+      addRow(body,'Колонки',makeInput('number',block.content.columns||3,(v)=>{updateBlockContent(block.id,'columns',v);renderCanvas()},{min:1,max:6}));
+      const gallUpBtn=document.createElement('button');gallUpBtn.className='prop-btn';gallUpBtn.textContent='📁 Добавить фото';
+      gallUpBtn.onclick=()=>{const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.multiple=true;inp.onchange=e=>{Array.from(e.target.files).forEach(f=>{const r=new FileReader();r.onload=ev=>{if(!block.content.images)block.content.images=[];block.content.images.push(ev.target.result);renderCanvas();renderProperties()};r.readAsDataURL(f)})};inp.click()};
+      body.appendChild(gallUpBtn);
+      break;
+    case 'timer':
+      addRow(body,'Дата',makeInput('datetime-local',block.content.targetDate,(v)=>{updateBlockContent(block.id,'targetDate',v);renderCanvas()}));
+      break;
+    case 'divider':
+      addRow(body,'Стиль',makeSelect(DIVIDER_STYLES,block.content.dividerStyle,(v)=>{updateBlockContent(block.id,'dividerStyle',v);renderCanvas()}));
+      addRow(body,'Ширина %',makeInput('number',block.content.widthPercent||40,(v)=>{updateBlockContent(block.id,'widthPercent',v);renderCanvas()},{min:10,max:100}));
+      addRow(body,'Толщина',makeInput('number',block.content.thickness||1,(v)=>{updateBlockContent(block.id,'thickness',v);renderCanvas()},{min:1,max:10}));
+      addRow(body,'Декор',makeSelect([{value:'none',label:'Нет'},{value:'heart',label:'♥ Сердце'},{value:'diamond',label:'◆ Ромб'},{value:'star',label:'✦ Звезда'},{value:'leaf',label:'🌿 Листок'}],block.content.ornament||'none',(v)=>{updateBlockContent(block.id,'ornament',v);renderCanvas()}));
+      break;
+    case 'button':
+      addRow(body,'Текст',makeInput('text',block.content.text,(v)=>{updateBlockContent(block.id,'text',v);renderCanvas()}));
+      addRow(body,'Ссылка',makeInput('text',block.content.link,(v)=>updateBlockContent(block.id,'link',v)));
+      break;
+    case 'spacer':
+      addRow(body,'Высота',makeInput('number',block.content.height||40,(v)=>{updateBlockContent(block.id,'height',v);renderCanvas()},{min:10,max:500}));
+      break;
+    case 'custom':
+      addRow(body,null,makeTextarea(block.content.html,(v)=>{updateBlockContent(block.id,'html',v);renderCanvas()},6),false);
+      break;
+  }
+  panel.appendChild(group);
+}
+
+// ---- Typography Props ----
+function renderTypographyProps(panel,block){
+  const s=block.style;
+  const{group,body}=createPropGroup('Типографика');
+  const fontSel=makeSelect(FONTS.map(f=>({value:f,label:f})),s.fontFamily||'Montserrat',(v)=>{updateBlockStyle(block.id,'fontFamily',v);renderProperties()});
+  fontSel.style.fontFamily=s.fontFamily||'Montserrat';
+  addRow(body,'Шрифт',fontSel);
+  const sizeRow=document.createElement('div');sizeRow.className='prop-row-inline';
+  const sd1=document.createElement('div');addRow(sd1,'Размер',makeInput('number',s.fontSize||16,(v)=>{updateBlockStyle(block.id,'fontSize',v)},{min:8,max:200}));
+  const sd2=document.createElement('div');addRow(sd2,'Вес',makeSelect(FONT_WEIGHTS,s.fontWeight||'400',(v)=>{updateBlockStyle(block.id,'fontWeight',v)}));
+  sizeRow.appendChild(sd1);sizeRow.appendChild(sd2);body.appendChild(sizeRow);
+
+  addRow(body,'Цвет',makeColorRow(s.color||'#333333',(v)=>{updateBlockStyle(block.id,'color',v)}),false);
+  addRow(body,'Выравнивание',makeAlignBtns(s.textAlign||'center',(v)=>{updateBlockStyle(block.id,'textAlign',v);renderCanvas()}),false);
+
+  const spRow=document.createElement('div');spRow.className='prop-row-inline';
+  const sp1=document.createElement('div');addRow(sp1,'Интервал',makeInput('number',s.lineHeight||1.6,(v)=>{updateBlockStyle(block.id,'lineHeight',v)},{min:0.5,max:4,step:0.1}));
+  const sp2=document.createElement('div');addRow(sp2,'Трекинг',makeInput('number',s.letterSpacing||0,(v)=>{updateBlockStyle(block.id,'letterSpacing',v)},{min:-5,max:30}));
+  spRow.appendChild(sp1);spRow.appendChild(sp2);body.appendChild(spRow);
+
+  addRow(body,'Регистр',makeSelect([{value:'none',label:'Нет'},{value:'uppercase',label:'ВЕРХНИЙ'},{value:'lowercase',label:'нижний'},{value:'capitalize',label:'Каждое Слово'}],s.textTransform||'none',(v)=>{updateBlockStyle(block.id,'textTransform',v);renderCanvas()}));
+
+  panel.appendChild(group);
+}
+
+// ---- Background Props ----
+function renderBackgroundProps(panel,block){
+  const s=block.style;
+  const{group,body}=createPropGroup('Фон',true);
+  addRow(body,'Цвет фона',makeColorRow(s.backgroundColor||'transparent',(v)=>{updateBlockStyle(block.id,'backgroundColor',v)}),false);
+  panel.appendChild(group);
+}
+
+// ---- Spacing Props ----
+function renderSpacingProps(panel,block){
+  const s=block.style;
+  const{group,body}=createPropGroup('Отступы',true);
+  addRow(body,'Внутренний',makeInput('number',s.padding!=null?s.padding:20,(v)=>{updateBlockStyle(block.id,'padding',v)},{min:0,max:200}));
+  const mRow=document.createElement('div');mRow.className='prop-row-inline';
+  const m1=document.createElement('div');addRow(m1,'Сверху',makeInput('number',s.marginTop||0,(v)=>{updateBlockStyle(block.id,'marginTop',v)},{min:0,max:200}));
+  const m2=document.createElement('div');addRow(m2,'Снизу',makeInput('number',s.marginBottom||0,(v)=>{updateBlockStyle(block.id,'marginBottom',v)},{min:0,max:200}));
+  mRow.appendChild(m1);mRow.appendChild(m2);body.appendChild(mRow);
+  panel.appendChild(group);
+}
+
+// ---- Border Props ----
+function renderBorderProps(panel,block){
+  const s=block.style;
+  const{group,body}=createPropGroup('Граница',true);
+  addRow(body,'Толщина',makeInput('number',s.borderWidth||0,(v)=>{updateBlockStyle(block.id,'borderWidth',v)},{min:0,max:20}));
+  addRow(body,'Цвет',makeColorRow(s.borderColor||'#cccccc',(v)=>{updateBlockStyle(block.id,'borderColor',v)}),false);
+  addRow(body,'Скругление',makeInput('number',s.borderRadius||0,(v)=>{updateBlockStyle(block.id,'borderRadius',v)},{min:0,max:200}));
+  panel.appendChild(group);
+}
+
+// ---- Effects Props ----
+function renderEffectsProps(panel,block){
+  const s=block.style;
+  const{group,body}=createPropGroup('Эффекты',true);
+  addRow(body,'Прозрачность',makeInput('number',s.opacity!=null?s.opacity:1,(v)=>{updateBlockStyle(block.id,'opacity',v)},{min:0,max:1,step:0.05}));
+  addRow(body,'Анимация',makeSelect(ANIMATIONS,s.animation||'none',(v)=>{updateBlockStyle(block.id,'animation',v);renderCanvas()}));
+  panel.appendChild(group);
+}
+
+// ---- Position Props ----
+function renderPositionProps(panel,block){
+  const{group,body}=createPropGroup('Позиция');
+  const pRow=document.createElement('div');pRow.className='prop-row-inline';
+  const p1=document.createElement('div');addRow(p1,'X',makeInput('number',block.x||0,(v)=>{updateBlockPos(block.id,'x',v)},{step:1}));
+  const p2=document.createElement('div');addRow(p2,'Y',makeInput('number',block.y||0,(v)=>{updateBlockPos(block.id,'y',v)},{step:1}));
+  pRow.appendChild(p1);pRow.appendChild(p2);body.appendChild(pRow);
+  addRow(body,'Ширина',makeInput('number',typeof block.w==='number'?block.w:state.canvas.width,(v)=>{updateBlockPos(block.id,'w',v)},{min:50}));
+  panel.appendChild(group);
+}
+
+// ---- Actions Props ----
+function renderActionsProps(panel,block){
+  const{group,body}=createPropGroup('Действия');
+  const dupBtn=document.createElement('button');dupBtn.className='prop-btn';dupBtn.textContent='📋 Дублировать';dupBtn.onclick=()=>duplicateBlock(block.id);
+  body.appendChild(dupBtn);
+  const upBtn=document.createElement('button');upBtn.className='prop-btn';upBtn.textContent='↑ Переместить выше';upBtn.onclick=()=>{moveBlockUp(block.id);renderProperties()};
+  body.appendChild(upBtn);
+  const dnBtn=document.createElement('button');dnBtn.className='prop-btn';dnBtn.textContent='↓ Переместить ниже';dnBtn.onclick=()=>{moveBlockDown(block.id);renderProperties()};
+  body.appendChild(dnBtn);
+  const delBtn=document.createElement('button');delBtn.className='prop-btn danger';delBtn.textContent='🗑 Удалить блок';delBtn.onclick=()=>removeBlock(block.id);
+  body.appendChild(delBtn);
+  panel.appendChild(group);
+}
+
+// ---- Canvas Props ----
+function renderCanvasProps(panel){
+  panel.innerHTML='';
+  const{group,body}=createPropGroup('Холст');
+  addRow(body,'Название',makeInput('text',state.projectName||'',(v)=>{state.projectName=v;autoSave()}));
+  addRow(body,'Ширина',makeInput('number',state.canvas.width,(v)=>{state.canvas.width=v;renderCanvas();autoSave()},{min:300,max:1200}));
+  addRow(body,'Фон',makeColorRow(state.canvas.background,(v)=>{state.canvas.background=v;renderCanvas();autoSave()}),false);
+  addRow(body,'Фон (URL)',makeInput('text',state.canvas.backgroundImage||'',(v)=>{state.canvas.backgroundImage=v;renderCanvas();autoSave()}));
+  addRow(body,'Отступ',makeInput('number',state.canvas.padding||0,(v)=>{state.canvas.padding=v;renderCanvas();autoSave()},{min:0,max:100}));
+  panel.appendChild(group);
+
+  // Quick actions
+  const{group:g2,body:b2}=createPropGroup('Быстрые действия');
+  const clearBtn=document.createElement('button');clearBtn.className='prop-btn danger';clearBtn.textContent='🗑 Очистить всё';
+  clearBtn.onclick=()=>{if(confirm('Удалить все блоки?')){state.blocks=[];state.selectedId=null;saveHistory();fullRender();autoSave();toast('Холст очищен')}};
+  b2.appendChild(clearBtn);
+  panel.appendChild(g2);
+
+  // Info
+  const info=document.createElement('div');
+  info.className='empty-state';
+  info.innerHTML=`<span class="icon">💡</span>Кликните на блок для редактирования<br>или дважды кликните для редактирования текста`;
+  panel.appendChild(info);
+}
+
+// ===================== TEMPLATES =====================
+const BUILTIN_TEMPLATES = {
+  minimalist:{
+    name:'Минимализм',icon:'⬜',desc:'Чистый и простой дизайн',
+    data:{
+      canvas:{width:600,background:'#ffffff',backgroundImage:'',padding:0},
+      layoutMode:'flow',
+      blocks:[
+        {type:'spacer',content:{height:60},style:{}},
+        {type:'text',content:{text:'СВАДЬБА'},style:{fontFamily:'Montserrat',fontSize:12,fontWeight:'400',color:'#999999',textAlign:'center',padding:8,letterSpacing:8,textTransform:'uppercase',lineHeight:1.5}},
+        {type:'names',content:{text:'Анна & Михаил'},style:{fontFamily:'Playfair Display',fontSize:48,fontWeight:'700',color:'#222222',textAlign:'center',padding:16,lineHeight:1.2,letterSpacing:2}},
+        {type:'divider',content:{dividerStyle:'solid',widthPercent:30,thickness:1,ornament:'none'},style:{color:'#dddddd',padding:16}},
+        {type:'date',content:{text:'15 июня 2025'},style:{fontFamily:'Montserrat',fontSize:16,fontWeight:'300',color:'#666666',textAlign:'center',padding:8,letterSpacing:4,textTransform:'uppercase',lineHeight:1.5}},
+        {type:'spacer',content:{height:20},style:{}},
+        {type:'text',content:{text:'Мы рады пригласить вас разделить с нами\nэтот особенный день'},style:{fontFamily:'Lora',fontSize:16,fontWeight:'400',color:'#555555',textAlign:'center',padding:20,lineHeight:1.8,letterSpacing:0}},
+        {type:'timer',content:{targetDate:'2025-06-15T16:00:00',labels:['дней','часов','минут','секунд']},style:{fontFamily:'Montserrat',fontSize:28,fontWeight:'700',color:'#222222',padding:24,textAlign:'center'}},
+        {type:'venue',content:{text:'Ресторан «Усадьба»\nМосква, ул. Пушкина, 10\nНачало в 16:00'},style:{fontFamily:'Montserrat',fontSize:14,fontWeight:'300',color:'#777777',textAlign:'center',padding:20,lineHeight:2,letterSpacing:1}},
+        {type:'divider',content:{dividerStyle:'solid',widthPercent:30,thickness:1,ornament:'none'},style:{color:'#dddddd',padding:16}},
+        {type:'button',content:{text:'ПОДТВЕРДИТЬ УЧАСТИЕ',link:'#'},style:{fontFamily:'Montserrat',fontSize:12,fontWeight:'500',color:'#ffffff',backgroundColor:'#222222',padding:16,textAlign:'center',borderRadius:0,letterSpacing:3,textTransform:'uppercase'}},
+        {type:'spacer',content:{height:60},style:{}}
+      ]
+    }
+  },
+  romantic:{
+    name:'Романтический',icon:'🌸',desc:'Нежный стиль с цветами',
+    data:{
+      canvas:{width:600,background:'#fdf6f0',backgroundImage:'',padding:0},
+      layoutMode:'flow',
+      blocks:[
+        {type:'spacer',content:{height:50},style:{}},
+        {type:'text',content:{text:'Приглашение на свадьбу'},style:{fontFamily:'Dancing Script',fontSize:22,fontWeight:'400',color:'#c9856b',textAlign:'center',padding:8,letterSpacing:1,lineHeight:1.5}},
+        {type:'names',content:{text:'Анна & Михаил'},style:{fontFamily:'Great Vibes',fontSize:60,fontWeight:'400',color:'#c9856b',textAlign:'center',padding:16,lineHeight:1.1,letterSpacing:2}},
+        {type:'divider',content:{dividerStyle:'solid',widthPercent:20,thickness:1,ornament:'heart'},style:{color:'#e8b4b8',padding:12}},
+        {type:'date',content:{text:'Пятнадцатого июня\nдве тысячи двадцать пятого года'},style:{fontFamily:'Cormorant Garamond',fontSize:18,fontWeight:'300',color:'#8b6f5f',textAlign:'center',padding:12,letterSpacing:1,lineHeight:1.8}},
+        {type:'image',content:{src:'https://images.unsplash.com/photo-1519741497674-611481863552?w=600&h=350&fit=crop',alt:'Wedding',objectFit:'cover'},style:{padding:24,borderRadius:12,maxHeight:350}},
+        {type:'text',content:{text:'Дорогие друзья!\n\nМы рады пригласить вас разделить с нами\nсамый счастливый день нашей жизни'},style:{fontFamily:'Cormorant Garamond',fontSize:18,fontWeight:'400',color:'#6b5050',textAlign:'center',padding:20,lineHeight:1.9,letterSpacing:0,fontStyle:'italic'}},
+        {type:'timer',content:{targetDate:'2025-06-15T16:00:00',labels:['дней','часов','минут','секунд']},style:{fontFamily:'Cormorant Garamond',fontSize:32,fontWeight:'600',color:'#c9856b',padding:24,textAlign:'center'}},
+        {type:'venue',content:{text:'🌿\n\nРесторан «Розовый сад»\nМосква, ул. Цветочная, 15\nСбор гостей в 15:30 · Начало в 16:00'},style:{fontFamily:'Cormorant Garamond',fontSize:16,fontWeight:'400',color:'#8b6f5f',textAlign:'center',padding:20,lineHeight:2,letterSpacing:0}},
+        {type:'button',content:{text:'С радостью приду!',link:'#'},style:{fontFamily:'Dancing Script',fontSize:18,fontWeight:'400',color:'#ffffff',backgroundColor:'#c9856b',padding:16,textAlign:'center',borderRadius:30,letterSpacing:1}},
+        {type:'spacer',content:{height:50},style:{}}
+      ]
+    }
+  },
+  luxury:{
+    name:'Luxury',icon:'👑',desc:'Тёмный дизайн с золотом',
+    data:{
+      canvas:{width:600,background:'#1a1a2e',backgroundImage:'',padding:0},
+      layoutMode:'flow',
+      blocks:[
+        {type:'spacer',content:{height:50},style:{}},
+        {type:'divider',content:{dividerStyle:'solid',widthPercent:50,thickness:1,ornament:'diamond'},style:{color:'#c9a96e',padding:12}},
+        {type:'text',content:{text:'СВАДЕБНОЕ ТОРЖЕСТВО'},style:{fontFamily:'Cinzel',fontSize:13,fontWeight:'400',color:'#c9a96e',textAlign:'center',padding:8,letterSpacing:8,textTransform:'uppercase',lineHeight:1.5}},
+        {type:'names',content:{text:'Анна & Михаил'},style:{fontFamily:'Playfair Display',fontSize:52,fontWeight:'700',color:'#e8e0d0',textAlign:'center',padding:20,lineHeight:1.2,letterSpacing:3}},
+        {type:'divider',content:{dividerStyle:'solid',widthPercent:50,thickness:1,ornament:'diamond'},style:{color:'#c9a96e',padding:12}},
+        {type:'date',content:{text:'15 · 06 · 2025'},style:{fontFamily:'Cinzel',fontSize:22,fontWeight:'400',color:'#c9a96e',textAlign:'center',padding:12,letterSpacing:6,lineHeight:1.5}},
+        {type:'spacer',content:{height:20},style:{}},
+        {type:'text',content:{text:'Имеем честь пригласить Вас\nна торжество по случаю\nнашего бракосочетания'},style:{fontFamily:'Cormorant Garamond',fontSize:18,fontWeight:'300',color:'#b0a8a0',textAlign:'center',padding:20,lineHeight:2,letterSpacing:1,fontStyle:'italic'}},
+        {type:'timer',content:{targetDate:'2025-06-15T16:00:00',labels:['дней','часов','минут','секунд']},style:{fontFamily:'Cinzel',fontSize:30,fontWeight:'700',color:'#c9a96e',padding:30,textAlign:'center',backgroundColor:'rgba(201,169,110,0.08)'}},
+        {type:'venue',content:{text:'GRAND HOTEL MOSCOW\n\nул. Тверская, 15\nЗал «Империал»\n\nНачало торжества в 18:00'},style:{fontFamily:'Montserrat',fontSize:13,fontWeight:'300',color:'#a098a0',textAlign:'center',padding:24,lineHeight:2.2,letterSpacing:2}},
+        {type:'divider',content:{dividerStyle:'solid',widthPercent:30,thickness:1,ornament:'star'},style:{color:'#c9a96e',padding:12}},
+        {type:'button',content:{text:'RSVP',link:'#'},style:{fontFamily:'Cinzel',fontSize:14,fontWeight:'700',color:'#1a1a2e',backgroundColor:'#c9a96e',padding:16,textAlign:'center',borderRadius:0,letterSpacing:5,textTransform:'uppercase'}},
+        {type:'spacer',content:{height:50},style:{}}
+      ]
+    }
+  }
+};
+
+function showTemplatesModal(){
+  const overlay=document.getElementById('modal-overlay');
+  const modal=document.getElementById('modal');
+  const savedTemplates=JSON.parse(localStorage.getItem('wedding_templates')||'[]');
+
+  let html=`<div class="modal-header"><h3>📋 Шаблоны</h3><button class="modal-close" onclick="closeModal()">✕</button></div>`;
+  html+='<div class="modal-body">';
+  html+='<div class="panel-section-title" style="margin-bottom:12px">Встроенные шаблоны</div>';
+  html+='<div class="template-grid">';
+  for(const[key,tmpl]of Object.entries(BUILTIN_TEMPLATES)){
+    const previewBg=tmpl.data.canvas.background;
+    const textColor=isLightColor(previewBg)?'#333':'#eee';
+    html+=`<div class="template-card" onclick="applyTemplate('${key}')">
+      <div class="preview" style="background:${previewBg};color:${textColor}">
+        <div style="font-family:'Great Vibes',cursive;font-size:24px">${tmpl.icon}<br><span style="font-size:14px">${tmpl.name}</span></div>
+      </div>
+      <div class="tname">${tmpl.name}</div>
+      <div class="tdesc">${tmpl.desc}</div>
+    </div>`;
+  }
+  html+='</div>';
+
+  // Saved templates
+  html+='<div class="saved-templates"><div class="panel-section-title" style="margin:16px 0 8px">Сохранённые шаблоны</div>';
+  if(savedTemplates.length===0){
+    html+='<div style="color:var(--tx3);font-size:11px;padding:10px">Нет сохранённых шаблонов. Используйте кнопку ниже, чтобы сохранить текущий дизайн.</div>';
+  }
+  savedTemplates.forEach((t,i)=>{
+    html+=`<div class="saved-template-item" onclick="applySavedTemplate(${i})">
+      <span style="font-size:18px">📄</span>
+      <span class="st-name">${t.name||'Шаблон '+(i+1)}</span>
+      <button class="st-del" onclick="event.stopPropagation();deleteSavedTemplate(${i})" title="Удалить">✕</button>
+    </div>`;
+  });
+  html+='</div>';
+
+  html+='</div>';
+  html+=`<div class="modal-footer">
+    <button class="tb-btn" onclick="saveCurrentAsTemplate()">💾 Сохранить текущий дизайн</button>
+    <button class="tb-btn" onclick="closeModal()">Закрыть</button>
+  </div>`;
+  modal.innerHTML=html;
+  overlay.classList.add('show');
+}
+
+function closeModal(){document.getElementById('modal-overlay').classList.remove('show')}
+
+function applyTemplate(key){
+  const tmpl=BUILTIN_TEMPLATES[key];
+  if(!tmpl)return;
+  if(!confirm('Применить шаблон? Текущий дизайн будет заменён.'))return;
+  const data=deepClone(tmpl.data);
+  state.canvas=data.canvas;
+  state.layoutMode=data.layoutMode||'flow';
+  state.blocks=data.blocks.map(b=>{
+    b.id=uid();b.visible=true;b.locked=false;b.x=b.x||50;b.y=b.y||50;b.w=b.w||'100%';b.h=b.h||'auto';
+    return b;
+  });
+  state.selectedId=null;
+  saveHistory();fullRender();autoSave();closeModal();
+  toast('✅ Шаблон «'+tmpl.name+'» применён');
+}
+
+function saveCurrentAsTemplate(){
+  const name=prompt('Название шаблона:',state.projectName||'Мой шаблон');
+  if(!name)return;
+  const saved=JSON.parse(localStorage.getItem('wedding_templates')||'[]');
+  saved.push({name,data:deepClone({canvas:state.canvas,layoutMode:state.layoutMode,blocks:state.blocks}),date:new Date().toISOString()});
+  localStorage.setItem('wedding_templates',JSON.stringify(saved));
+  showTemplatesModal();
+  toast('💾 Шаблон сохранён');
+}
+
+function applySavedTemplate(index){
+  const saved=JSON.parse(localStorage.getItem('wedding_templates')||'[]');
+  const tmpl=saved[index];if(!tmpl)return;
+  if(!confirm('Применить шаблон «'+tmpl.name+'»?'))return;
+  const data=deepClone(tmpl.data);
+  state.canvas=data.canvas;
+  state.layoutMode=data.layoutMode||'flow';
+  state.blocks=data.blocks.map(b=>{if(!b.id)b.id=uid();return b});
+  state.selectedId=null;
+  saveHistory();fullRender();autoSave();closeModal();
+  toast('✅ Шаблон применён');
+}
+
+function deleteSavedTemplate(index){
+  if(!confirm('Удалить шаблон?'))return;
+  const saved=JSON.parse(localStorage.getItem('wedding_templates')||'[]');
+  saved.splice(index,1);
+  localStorage.setItem('wedding_templates',JSON.stringify(saved));
+  showTemplatesModal();
+  toast('🗑 Шаблон удалён');
+}
+
+function isLightColor(hex){
+  if(!hex||hex==='transparent')return true;
+  hex=hex.replace('#','');
+  if(hex.length===3)hex=hex.split('').map(c=>c+c).join('');
+  const r=parseInt(hex.substr(0,2),16);
+  const g=parseInt(hex.substr(2,2),16);
+  const b=parseInt(hex.substr(4,2),16);
+  return(r*299+g*587+b*114)/1000>128;
+}
+
+// ===================== RANDOMIZE =====================
+function randomizeDesign(){
+  const palette=PALETTES[Math.floor(Math.random()*PALETTES.length)];
+  state.canvas.background=palette.bg;
+  state.blocks.forEach(b=>{
+    const s=b.style;
+    if(['heading','names'].includes(b.type)){
+      s.fontFamily=palette.font1;
+      s.color=palette.secondary;
+    }else if(['text','date','venue'].includes(b.type)){
+      s.fontFamily=palette.font2;
+      s.color=palette.accent;
+    }else if(b.type==='timer'){
+      s.fontFamily=palette.font2;
+      s.color=palette.secondary;
+    }else if(b.type==='button'){
+      s.fontFamily=palette.font2;
+      s.backgroundColor=palette.secondary;
+      s.color=isLightColor(palette.secondary)?'#111':'#fff';
+    }else if(b.type==='divider'){
+      s.color=palette.secondary;
+    }
+  });
+  saveHistory();fullRender();autoSave();
+  toast('🎲 Палитра: '+palette.name);
+}
+
+// ===================== SAVE/LOAD =====================
+function autoSave(){
+  try{
+    localStorage.setItem('wedding_designer_autosave',JSON.stringify({
+      state:{blocks:state.blocks,canvas:state.canvas,layoutMode:state.layoutMode,projectName:state.projectName},
+      timestamp:Date.now()
+    }));
+  }catch(e){console.warn('AutoSave failed:',e)}
+}
+
+function loadAutoSave(){
+  try{
+    const data=JSON.parse(localStorage.getItem('wedding_designer_autosave'));
+    if(data&&data.state){
+      state.blocks=data.state.blocks||[];
+      state.canvas=data.state.canvas||state.canvas;
+      state.layoutMode=data.state.layoutMode||'flow';
+      state.projectName=data.state.projectName||'Мое приглашение';
+      return true;
+    }
+  }catch(e){}
+  return false;
+}
+
+function saveProjectFile(){
+  const json=JSON.stringify({
+    version:1,
+    name:state.projectName,
+    state:{blocks:state.blocks,canvas:state.canvas,layoutMode:state.layoutMode,projectName:state.projectName},
+    timestamp:Date.now()
+  },null,2);
+  const blob=new Blob([json],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=(state.projectName||'wedding-project')+'.json';
+  a.click();URL.revokeObjectURL(url);
+  toast('💾 Проект сохранён');
+}
+
+function loadProjectFile(){
+  const inp=document.createElement('input');
+  inp.type='file';inp.accept='.json';
+  inp.onchange=e=>{
+    const f=e.target.files[0];if(!f)return;
+    const r=new FileReader();
+    r.onload=ev=>{
+      try{
+        const data=JSON.parse(ev.target.result);
+        if(data.state){
+          state.blocks=data.state.blocks||[];
+          state.canvas=data.state.canvas||state.canvas;
+          state.layoutMode=data.state.layoutMode||'flow';
+          state.projectName=data.state.projectName||data.name||'Мое приглашение';
+          state.selectedId=null;
+          saveHistory();fullRender();autoSave();
+          toast('📂 Проект загружен');
+        }
+      }catch(err){toast('❌ Ошибка загрузки');console.error(err)}
+    };
+    r.readAsText(f);
+  };
+  inp.click();
+}
+
+// ===================== EXPORT HTML =====================
+function exportHTML(){
+  const usedFonts=new Set();
+  state.blocks.forEach(b=>{if(b.style.fontFamily)usedFonts.add(b.style.fontFamily)});
+  const fontsURL='https://fonts.googleapis.com/css2?'+Array.from(usedFonts).map(f=>'family='+f.replace(/ /g,'+')+':ital,wght@0,300;0,400;0,500;0,600;0,700;1,400').join('&')+'&display=swap';
+  const hasTimers=state.blocks.some(b=>b.type==='timer');
+  const hasAnimations=state.blocks.some(b=>b.style.animation&&b.style.animation!=='none');
+
+  let html=`<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${state.projectName||'Свадебное приглашение'}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="${fontsURL}" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#f0f0f0;display:flex;justify-content:center;min-height:100vh;padding:20px 10px;font-family:'Montserrat',sans-serif}
+.invitation{width:100%;max-width:${state.canvas.width}px;background:${state.canvas.background};${state.canvas.backgroundImage?`background-image:url(${state.canvas.backgroundImage});background-size:cover;background-position:center;`:''}${state.canvas.padding?`padding:${state.canvas.padding}px;`:''}position:relative;box-shadow:0 4px 30px rgba(0,0,0,.15);min-height:400px}
+${state.layoutMode==='flow'?'.block{position:relative}':'.block{position:absolute}'}
+.timer-display{display:flex;gap:16px;justify-content:center;padding:10px}
+.timer-unit{text-align:center}
+.timer-num{display:block}
+.timer-label{font-size:10px;text-transform:uppercase;letter-spacing:1px;opacity:.6;margin-top:2px}
+.gallery-grid img{width:100%;height:150px;object-fit:cover;border-radius:4px}
+.btn-el{display:inline-block;text-decoration:none;transition:opacity .2s;cursor:pointer}
+.btn-el:hover{opacity:.85}
+`;
+
+  if(hasAnimations){
+    html+=`
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideLeft{from{opacity:0;transform:translateX(-30px)}to{opacity:1;transform:translateX(0)}}
+@keyframes slideRight{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}
+@keyframes zoomIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
+.anim{opacity:0}
+.anim.visible{animation-fill-mode:both}
+`;
+  }
+
+  html+=`</style>
+</head>
+<body>
+<div class="invitation">
+`;
+
+  state.blocks.forEach((block,i)=>{
+    if(block.visible===false)return;
+    html+=exportBlock(block,i);
+  });
+
+  html+=`</div>
+`;
+
+  if(hasTimers){
+    html+=`<script>
+function updateTimers(){document.querySelectorAll('.timer-display').forEach(el=>{const t=el.dataset.target;if(!t)return;const d=new Date(t)-new Date();if(d<=0){el.querySelectorAll('.timer-num').forEach(n=>n.textContent='0');return}const days=Math.floor(d/864e5);const hrs=Math.floor(d%864e5/36e5);const mins=Math.floor(d%36e5/6e4);const secs=Math.floor(d%6e4/1e3);const n=el.querySelectorAll('.timer-num');if(n[0])n[0].textContent=days;if(n[1])n[1].textContent=hrs;if(n[2])n[2].textContent=mins;if(n[3])n[3].textContent=secs})}
+updateTimers();setInterval(updateTimers,1000);
+<\/script>
+`;
+  }
+
+  if(hasAnimations){
+    html+=`<script>
+const observer=new IntersectionObserver((entries)=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');observer.unobserve(e.target)}})},{threshold:0.15});
+document.querySelectorAll('.anim').forEach(el=>observer.observe(el));
+<\/script>
+`;
+  }
+
+  html+=`</body>
+</html>`;
+
+  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=(state.projectName||'invitation')+'.html';
+  a.click();URL.revokeObjectURL(url);
+  toast('🚀 HTML экспортирован!');
+}
+
+function exportBlock(block,index){
+  const s=block.style||{};
+  const c=block.content||{};
+  let style='';
+
+  if(state.layoutMode==='free'){
+    style+=`position:absolute;left:${block.x||0}px;top:${block.y||0}px;`;
+    if(block.w)style+=`width:${typeof block.w==='number'?block.w+'px':block.w};`;
+  }
+  if(s.padding!==undefined)style+=`padding:${s.padding}px;`;
+  if(s.backgroundColor&&s.backgroundColor!=='transparent')style+=`background-color:${s.backgroundColor};`;
+  if(s.borderRadius)style+=`border-radius:${s.borderRadius}px;`;
+  if(s.opacity!==undefined&&s.opacity!==1)style+=`opacity:${s.opacity};`;
+  if(s.borderWidth)style+=`border:${s.borderWidth}px solid ${s.borderColor||'#ccc'};`;
+  if(s.marginTop)style+=`margin-top:${s.marginTop}px;`;
+  if(s.marginBottom)style+=`margin-bottom:${s.marginBottom}px;`;
+
+  let animClass='';
+  let animStyle='';
+  if(s.animation&&s.animation!=='none'){
+    animClass=' anim';
+    animStyle=`;animation:${s.animation} .8s ease both;animation-delay:${index*0.1}s`;
+  }
+
+  let inner='';
+  switch(block.type){
+    case 'heading':case 'text':case 'names':case 'date':case 'venue':{
+      let ts=`font-family:'${s.fontFamily||'Montserrat'}',sans-serif;font-size:${s.fontSize||16}px;font-weight:${s.fontWeight||'400'};color:${s.color||'#333'};text-align:${s.textAlign||'center'};line-height:${s.lineHeight||1.6};letter-spacing:${s.letterSpacing||0}px;`;
+      if(s.fontStyle)ts+=`font-style:${s.fontStyle};`;
+      if(s.textTransform)ts+=`text-transform:${s.textTransform};`;
+      const tag=block.type==='heading'||block.type==='names'?'h1':block.type==='date'?'h2':'p';
+      inner=`<${tag} style="${ts}">${(c.text||'').replace(/\n/g,'<br>')}</${tag}>`;
+      break;
+    }
+    case 'image':{
+      let imgS=`width:100%;display:block;object-fit:${c.objectFit||'cover'};`;
+      if(s.borderRadius)imgS+=`border-radius:${s.borderRadius}px;`;
+      if(s.maxHeight)imgS+=`max-height:${s.maxHeight}px;`;
+      inner=`<img src="${c.src||''}" alt="${c.alt||''}" style="${imgS}">`;
+      break;
+    }
+    case 'gallery':{
+      const cols=c.columns||3;const gap=s.gap||8;
+      inner=`<div class="gallery-grid" style="display:grid;grid-template-columns:repeat(${cols},1fr);gap:${gap}px">`;
+      (c.images||[]).forEach(src=>{inner+=`<img src="${src}" alt="Gallery">`});
+      inner+='</div>';
+      break;
+    }
+    case 'timer':{
+      const labels=c.labels||['дней','часов','минут','секунд'];
+      let ts=`font-family:'${s.fontFamily||'Montserrat'}',sans-serif;color:${s.color||'#333'};`;
+      inner=`<div class="timer-display" data-target="${c.targetDate||''}" style="${ts}">`;
+      labels.forEach((l,li)=>{
+        inner+=`<div class="timer-unit"><span class="timer-num" style="font-size:${s.fontSize||28}px;font-weight:${s.fontWeight||'700'}">--</span><span class="timer-label">${l}</span></div>`;
+      });
+      inner+='</div>';
+      break;
+    }
+    case 'divider':{
+      const w=c.widthPercent||40;const thick=c.thickness||1;const ds=c.dividerStyle||'solid';const color=s.color||'#ccc';
+      let orn='';
+      if(c.ornament==='heart')orn='<span style="display:block;text-align:center;font-size:16px;margin:-10px 0;position:relative;z-index:1">♥</span>';
+      else if(c.ornament==='diamond')orn='<span style="display:block;text-align:center;font-size:14px;margin:-10px 0;position:relative;z-index:1">◆</span>';
+      else if(c.ornament==='star')orn='<span style="display:block;text-align:center;font-size:14px;margin:-10px 0;position:relative;z-index:1">✦</span>';
+      else if(c.ornament==='leaf')orn='<span style="display:block;text-align:center;font-size:16px;margin:-12px 0;position:relative;z-index:1">🌿</span>';
+      inner=`<div style="text-align:center"><hr style="width:${w}%;border:none;border-top:${thick}px ${ds} ${color};margin:0 auto">${orn}</div>`;
+      break;
+    }
+    case 'button':{
+      let bs=`font-family:'${s.fontFamily||'Montserrat'}',sans-serif;font-size:${s.fontSize||14}px;font-weight:${s.fontWeight||'500'};color:${s.color||'#fff'};background:${s.backgroundColor||'#333'};border-radius:${s.borderRadius||6}px;letter-spacing:${s.letterSpacing||2}px;padding:12px 32px;`;
+      if(s.textTransform)bs+=`text-transform:${s.textTransform};`;
+      if(s.borderWidth)bs+=`border:${s.borderWidth}px solid ${s.borderColor||s.color||'#fff'};`;
+      inner=`<div style="text-align:${s.textAlign||'center'}"><a href="${c.link||'#'}" class="btn-el" style="${bs}">${c.text||'Кнопка'}</a></div>`;
+      break;
+    }
+    case 'spacer':
+      inner=`<div style="height:${c.height||40}px"></div>`;
+      break;
+    case 'custom':
+      inner=c.html||'';
+      break;
+  }
+
+  return `<div class="block${animClass}" style="${style}${animStyle}">${inner}</div>\n`;
+}
+
+// ===================== KEYBOARD SHORTCUTS =====================
+document.addEventListener('keydown',e=>{
+  if(e.ctrlKey||e.metaKey){
+    if(e.key==='z'){e.preventDefault();if(e.shiftKey)redo();else undo()}
+    if(e.key==='y'){e.preventDefault();redo()}
+    if(e.key==='s'){e.preventDefault();saveProjectFile()}
+    if(e.key==='d'&&state.selectedId){e.preventDefault();duplicateBlock(state.selectedId)}
+  }
+  if(e.key==='Delete'&&state.selectedId){
+    const active=document.activeElement;
+    if(active&&(active.tagName==='INPUT'||active.tagName==='TEXTAREA'||active.contentEditable==='true'))return;
+    removeBlock(state.selectedId);
+  }
+  if(e.key==='Escape'){
+    state.selectedId=null;
+    fullRender();
+  }
+});
+
+// ===================== INITIALIZATION =====================
+function init(){
+  const loaded=loadAutoSave();
+  if(!loaded){
+    // Apply default minimalist template
+    applyTemplateData(BUILTIN_TEMPLATES.minimalist.data);
+  }
+  saveHistory();
+  fullRender();
+
+  // Timer update interval
+  if(timerInterval)clearInterval(timerInterval);
+  timerInterval=setInterval(updateTimers,1000);
+
+  // Canvas area click to deselect
+  document.getElementById('canvas-area').addEventListener('click',e=>{
+    if(e.target.id==='canvas-area'){
+      state.selectedId=null;
+      renderCanvas();renderLayers();renderProperties();
+    }
+  });
+
+  console.log('💍 Wedding Invitation Designer Pro initialized');
+}
+
+function applyTemplateData(data){
+  const d=deepClone(data);
+  state.canvas=d.canvas||state.canvas;
+  state.layoutMode=d.layoutMode||'flow';
+  state.blocks=(d.blocks||[]).map(b=>{
+    if(!b.id)b.id=uid();
+    if(b.visible===undefined)b.visible=true;
+    if(!b.x)b.x=50;if(!b.y)b.y=50;
+    if(!b.w)b.w='100%';if(!b.h)b.h='auto';
+    return b;
+  });
+  state.selectedId=null;
+}
+
+// Start
+init();
+</script>
+</body>
+</html>
