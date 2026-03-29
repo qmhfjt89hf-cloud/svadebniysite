@@ -175,12 +175,22 @@ input,select,textarea{font-family:inherit;font-size:12px;outline:none;border:non
 @keyframes slideLeft{from{opacity:0;transform:translateX(-30px)}to{opacity:1;transform:translateX(0)}}
 @keyframes slideRight{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}
 @keyframes zoomIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
+@keyframes flipIn{from{opacity:0;transform:perspective(800px) rotateX(-20deg)}to{opacity:1;transform:perspective(800px) rotateX(0)}}
+@keyframes blurIn{from{opacity:0;filter:blur(10px)}to{opacity:1;filter:blur(0)}}
+@keyframes swingIn{0%{opacity:0;transform:rotate(-8deg) scale(.95)}100%{opacity:1;transform:rotate(0) scale(1)}}
+@keyframes riseScale{from{opacity:0;transform:translateY(40px) scale(.92)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes rotateIn{from{opacity:0;transform:rotate(-8deg)}to{opacity:1;transform:rotate(0)}}
 
 .anim-fadeIn{animation:fadeIn .8s ease both}
 .anim-slideUp{animation:slideUp .8s ease both}
 .anim-slideLeft{animation:slideLeft .8s ease both}
 .anim-slideRight{animation:slideRight .8s ease both}
 .anim-zoomIn{animation:zoomIn .8s ease both}
+.anim-flipIn{animation:flipIn .9s ease both}
+.anim-blurIn{animation:blurIn 1s ease both}
+.anim-swingIn{animation:swingIn .9s ease both}
+.anim-riseScale{animation:riseScale .85s cubic-bezier(.2,.8,.2,1) both}
+.anim-rotateIn{animation:rotateIn .8s ease both}
 
 /* Toast */
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(40,40,42,.94);color:#fff;padding:10px 24px;border-radius:999px;font-size:12px;z-index:2000;border:1px solid rgba(255,255,255,.1);box-shadow:0 12px 30px rgba(0,0,0,.2);opacity:0;transition:.3s;pointer-events:none}
@@ -252,7 +262,18 @@ const FONT_WEIGHTS = [
 const ANIMATIONS = [
   {value:'none',label:'Нет'},{value:'fadeIn',label:'Появление'},
   {value:'slideUp',label:'Снизу вверх'},{value:'slideLeft',label:'Слева'},
-  {value:'slideRight',label:'Справа'},{value:'zoomIn',label:'Увеличение'}
+  {value:'slideRight',label:'Справа'},{value:'zoomIn',label:'Увеличение'},
+  {value:'flipIn',label:'3D переворот'},{value:'blurIn',label:'Фокус'},
+  {value:'swingIn',label:'Плавный маятник'},{value:'riseScale',label:'Подъём + масштаб'},
+  {value:'rotateIn',label:'Поворот'}
+];
+const EASINGS = [
+  {value:'ease',label:'Ease'},
+  {value:'linear',label:'Linear'},
+  {value:'ease-in',label:'Ease In'},
+  {value:'ease-out',label:'Ease Out'},
+  {value:'ease-in-out',label:'Ease In Out'},
+  {value:'cubic-bezier(.2,.8,.2,1)',label:'Soft Spring'}
 ];
 
 const DIVIDER_STYLES = [
@@ -281,6 +302,14 @@ const BLOCK_DEFS = {
     defaults:{content:{dividerStyle:'solid',widthPercent:40,thickness:1,ornament:'none'},style:{color:'#cccccc',padding:16}}},
   button:{name:'Кнопка',icon:'🔘',
     defaults:{content:{text:'Подтвердить участие',link:'#'},style:{fontFamily:'Montserrat',fontSize:14,fontWeight:'500',color:'#ffffff',backgroundColor:'#333333',padding:16,textAlign:'center',borderRadius:6,letterSpacing:2,textTransform:'uppercase'}}},
+  quote:{name:'Цитата',icon:'❝',
+    defaults:{content:{text:'Любовь — это выбор друг друга каждый день.',author:'— Неизвестный автор'},style:{fontFamily:'Cormorant Garamond',fontSize:28,fontWeight:'400',color:'#5d4a4a',textAlign:'center',padding:24,lineHeight:1.5,letterSpacing:0,fontStyle:'italic'}}},
+  schedule:{name:'Программа',icon:'🗓️',
+    defaults:{content:{items:'15:30 — Сбор гостей\n16:00 — Церемония\n17:00 — Фотосессия\n18:00 — Банкет'},style:{fontFamily:'Montserrat',fontSize:15,fontWeight:'400',color:'#444',textAlign:'left',padding:20,lineHeight:1.9,letterSpacing:0}}},
+  map:{name:'Карта',icon:'🗺️',
+    defaults:{content:{embedUrl:'https://www.google.com/maps?q=Moscow&output=embed',height:280,title:'Локация'},style:{padding:10,borderRadius:10}}},
+  video:{name:'Видео',icon:'🎬',
+    defaults:{content:{embedUrl:'https://www.youtube.com/embed/dQw4w9WgXcQ',height:280,title:'Видео'},style:{padding:10,borderRadius:10}}},
   spacer:{name:'Отступ',icon:'↕️',
     defaults:{content:{height:40},style:{}}},
   custom:{name:'HTML блок',icon:'🔧',
@@ -297,6 +326,22 @@ const PALETTES = [
   {name:'Персик',bg:'#fff5ee',primary:'#6b4226',secondary:'#e8a87c',accent:'#d4856b',font1:'Dancing Script',font2:'Comfortaa'},
   {name:'Синий',bg:'#f0f4f8',primary:'#1a365d',secondary:'#4a7cb5',accent:'#2b5797',font1:'Playfair Display',font2:'Raleway'},
 ];
+
+const BLOCK_SETS = {
+  hero:{name:'Hero экран',desc:'Обложка с именами, датой и кнопкой',icon:'🌟',blocks:[
+    {type:'spacer',content:{height:40},style:{}},
+    {type:'heading',content:{text:'Приглашение на свадьбу'},style:{fontFamily:'Playfair Display',fontSize:24,fontWeight:'700',color:'#444',textAlign:'center',padding:10,lineHeight:1.4,letterSpacing:1}},
+    {type:'names',content:{text:'Анна & Михаил'},style:{fontFamily:'Great Vibes',fontSize:62,fontWeight:'400',color:'#c9a96e',textAlign:'center',padding:12,lineHeight:1.1,letterSpacing:2}},
+    {type:'date',content:{text:'15 июня 2026'},style:{fontFamily:'Montserrat',fontSize:18,fontWeight:'300',color:'#666',textAlign:'center',padding:6,lineHeight:1.4,letterSpacing:4,textTransform:'uppercase'}},
+    {type:'button',content:{text:'Подтвердить участие',link:'#'},style:{fontFamily:'Montserrat',fontSize:12,fontWeight:'600',color:'#fff',backgroundColor:'#333',padding:14,textAlign:'center',borderRadius:24,letterSpacing:2,textTransform:'uppercase'}},
+    {type:'spacer',content:{height:24},style:{}}
+  ]},
+  dayPlan:{name:'План дня',desc:'Готовая программа мероприятия',icon:'🧭',blocks:[
+    {type:'heading',content:{text:'Программа дня'},style:{fontFamily:'Montserrat',fontSize:26,fontWeight:'700',color:'#2f2f2f',textAlign:'center',padding:10,lineHeight:1.3,letterSpacing:1}},
+    {type:'schedule',content:{items:'15:30 — Сбор гостей\n16:00 — Церемония\n17:00 — Прогулка и фото\n18:00 — Банкет\n22:00 — Торт'},style:{fontFamily:'Montserrat',fontSize:15,fontWeight:'400',color:'#4a4a4a',textAlign:'left',padding:20,lineHeight:2,letterSpacing:0}},
+    {type:'map',content:{embedUrl:'https://www.google.com/maps?q=Moscow&output=embed',height:260,title:'Локация'},style:{padding:10,borderRadius:12}}
+  ]}
+};
 
 // ===================== STATE =====================
 let state = {
@@ -465,7 +510,35 @@ function renderBlockPalette(){
     html+=`<div class="block-card" onclick="addBlock('${type}')" title="${def.name}"><span class="icon">${def.icon}</span><span class="name">${def.name}</span></div>`;
   }
   html+='</div></div>';
+  html+='<div class="panel-section"><div class="panel-section-title">Готовые секции</div>';
+  Object.entries(BLOCK_SETS).forEach(([key,set])=>{
+    html+=`<button class="prop-btn" style="margin-bottom:6px" onclick="addBlockSet('${key}')">${set.icon} ${set.name}<br><span style="font-size:10px;opacity:.75">${set.desc}</span></button>`;
+  });
+  html+='</div>';
   c.innerHTML=html;
+}
+
+function addBlockSet(key){
+  const set=BLOCK_SETS[key];
+  if(!set)return;
+  const prepared=set.blocks.map((b,idx)=>({
+    id:uid(),
+    type:b.type,
+    content:deepClone(b.content||{}),
+    style:deepClone(b.style||{}),
+    visible:true,
+    locked:false,
+    x:50,
+    y:(state.blocks.length+idx)*80+50,
+    w:'100%',
+    h:'auto'
+  }));
+  state.blocks.push(...prepared);
+  state.selectedId=prepared[prepared.length-1]?.id||null;
+  saveHistory();
+  fullRender();
+  autoSave();
+  toast(`✅ Добавлен набор: ${set.name}`);
 }
 
 function renderLayers(){
@@ -575,6 +648,9 @@ function renderBlockHTML(block, idx){
   if(s.marginBottom)blockStyle+=`margin-bottom:${s.marginBottom}px;`;
 
   const animClass=s.animation&&s.animation!=='none'?`anim-${s.animation}`:'';
+  const animTiming=s.animation&&s.animation!=='none'
+    ?`animation-duration:${s.animationDuration||0.8}s;animation-delay:${s.animationDelay||0}s;animation-timing-function:${s.animationEasing||'ease'};`
+    :'';
 
   let inner='';
   switch(block.type){
@@ -590,6 +666,14 @@ function renderBlockHTML(block, idx){
       inner=renderDividerContent(block);break;
     case 'button':
       inner=renderButtonContent(block);break;
+    case 'quote':
+      inner=renderQuoteContent(block);break;
+    case 'schedule':
+      inner=renderScheduleContent(block);break;
+    case 'map':
+      inner=renderEmbedContent(block,'map');break;
+    case 'video':
+      inner=renderEmbedContent(block,'video');break;
     case 'spacer':
       inner=`<div class="block-spacer" style="height:${block.content.height||40}px"></div>`;break;
     case 'custom':
@@ -598,7 +682,7 @@ function renderBlockHTML(block, idx){
       inner=`<div style="padding:20px;color:#999;text-align:center">[${block.type}]</div>`;
   }
 
-  return `<div class="canvas-block ${sel} ${animClass}" data-id="${block.id}" data-type="${block.type}" style="${blockStyle}">
+  return `<div class="canvas-block ${sel} ${animClass}" data-id="${block.id}" data-type="${block.type}" style="${blockStyle}${animTiming}">
     <div class="block-drag-handle" title="Перетащить">⠿</div>
     <span class="block-type-badge">${def.name}</span>
     <div class="resize-handle"></div>
@@ -672,6 +756,38 @@ function renderButtonContent(block){
   if(s.textTransform)btnStyle+=`text-transform:${s.textTransform};`;
   if(s.borderWidth)btnStyle+=`border:${s.borderWidth}px solid ${s.borderColor||s.color||'#fff'};`;
   return `<div style="text-align:${s.textAlign||'center'}"><span class="block-button-el" style="${btnStyle}">${c.text||'Кнопка'}</span></div>`;
+}
+
+function renderQuoteContent(block){
+  const c=block.content||{};
+  const s=block.style||{};
+  const textStyle=`font-family:'${s.fontFamily||'Cormorant Garamond'}',serif;font-size:${s.fontSize||28}px;font-weight:${s.fontWeight||'400'};color:${s.color||'#444'};text-align:${s.textAlign||'center'};line-height:${s.lineHeight||1.5};font-style:${s.fontStyle||'italic'};`;
+  const authorStyle=`font-family:'${s.fontFamily||'Cormorant Garamond'}',serif;font-size:${Math.max(12,(s.fontSize||28)*0.56)}px;color:${s.color||'#666'};opacity:.85;text-align:${s.textAlign||'center'};margin-top:8px;`;
+  return `<div><div style="${textStyle}">❝ ${(c.text||'').replace(/\n/g,'<br>')} ❞</div><div style="${authorStyle}">${c.author||''}</div></div>`;
+}
+
+function renderScheduleContent(block){
+  const c=block.content||{};
+  const s=block.style||{};
+  const items=(c.items||'').split('\n').filter(Boolean);
+  const wrapStyle=`font-family:'${s.fontFamily||'Montserrat'}',sans-serif;font-size:${s.fontSize||15}px;font-weight:${s.fontWeight||'400'};color:${s.color||'#444'};line-height:${s.lineHeight||1.8};letter-spacing:${s.letterSpacing||0}px;`;
+  let html=`<div style="${wrapStyle}">`;
+  items.forEach(item=>{
+    const parts=item.split('—');
+    if(parts.length>1)html+=`<div style="display:flex;gap:10px;justify-content:space-between;border-bottom:1px dashed rgba(0,0,0,.12);padding:6px 0"><strong>${parts[0].trim()}</strong><span>${parts.slice(1).join('—').trim()}</span></div>`;
+    else html+=`<div style="padding:6px 0">${item}</div>`;
+  });
+  html+='</div>';
+  return html;
+}
+
+function renderEmbedContent(block,mode){
+  const c=block.content||{};
+  const s=block.style||{};
+  const h=c.height||280;
+  const radius=s.borderRadius||10;
+  const title=c.title||'embed';
+  return `<iframe src="${c.embedUrl||''}" title="${title}" style="width:100%;height:${h}px;border:0;border-radius:${radius}px;display:block;background:#f2f2f7" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allow="${mode==='video'?'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture':''}" allowfullscreen></iframe>`;
 }
 
 function updateTimers(){
@@ -795,7 +911,7 @@ function renderProperties(){
   // Content props
   renderContentProps(panel,block);
   // Typography (for text blocks)
-  if(['heading','text','names','date','venue','button','timer'].includes(block.type)){
+  if(['heading','text','names','date','venue','button','timer','quote','schedule'].includes(block.type)){
     renderTypographyProps(panel,block);
   }
   // Background
@@ -810,6 +926,8 @@ function renderProperties(){
   if(state.layoutMode==='free')renderPositionProps(panel,block);
   // Actions
   renderActionsProps(panel,block);
+  // Advanced JSON
+  renderAdvancedJSONProps(panel,block);
 }
 
 function createPropGroup(title,collapsed){
@@ -926,6 +1044,21 @@ function renderContentProps(panel,block){
       addRow(body,'Текст',makeInput('text',block.content.text,(v)=>{updateBlockContent(block.id,'text',v);renderCanvas()}));
       addRow(body,'Ссылка',makeInput('text',block.content.link,(v)=>updateBlockContent(block.id,'link',v)));
       break;
+    case 'quote':
+      addRow(body,'Цитата',makeTextarea(block.content.text,(v)=>{updateBlockContent(block.id,'text',v);renderCanvas()},4),false);
+      addRow(body,'Автор',makeInput('text',block.content.author,(v)=>{updateBlockContent(block.id,'author',v);renderCanvas()}));
+      break;
+    case 'schedule':
+      const scheduleTa=makeTextarea(block.content.items,(v)=>{updateBlockContent(block.id,'items',v);renderCanvas()},6);
+      scheduleTa.placeholder='15:30 — Сбор гостей';
+      addRow(body,'Пункты',scheduleTa,false);
+      break;
+    case 'map':
+    case 'video':
+      addRow(body,'Embed URL',makeInput('text',block.content.embedUrl,(v)=>{updateBlockContent(block.id,'embedUrl',v);renderCanvas()}));
+      addRow(body,'Высота',makeInput('number',block.content.height||280,(v)=>{updateBlockContent(block.id,'height',v);renderCanvas()},{min:120,max:900}));
+      addRow(body,'Заголовок',makeInput('text',block.content.title||'',(v)=>{updateBlockContent(block.id,'title',v);renderCanvas()}));
+      break;
     case 'spacer':
       addRow(body,'Высота',makeInput('number',block.content.height||40,(v)=>{updateBlockContent(block.id,'height',v);renderCanvas()},{min:10,max:500}));
       break;
@@ -997,6 +1130,9 @@ function renderEffectsProps(panel,block){
   const{group,body}=createPropGroup('Эффекты',true);
   addRow(body,'Прозрачность',makeInput('number',s.opacity!=null?s.opacity:1,(v)=>{updateBlockStyle(block.id,'opacity',v)},{min:0,max:1,step:0.05}));
   addRow(body,'Анимация',makeSelect(ANIMATIONS,s.animation||'none',(v)=>{updateBlockStyle(block.id,'animation',v);renderCanvas()}));
+  addRow(body,'Длит. (сек)',makeInput('number',s.animationDuration||0.8,(v)=>{updateBlockStyle(block.id,'animationDuration',v);renderCanvas()},{min:0.1,max:8,step:0.1}));
+  addRow(body,'Задержка',makeInput('number',s.animationDelay||0,(v)=>{updateBlockStyle(block.id,'animationDelay',v);renderCanvas()},{min:0,max:8,step:0.1}));
+  addRow(body,'Кривая',makeSelect(EASINGS,s.animationEasing||'ease',(v)=>{updateBlockStyle(block.id,'animationEasing',v);renderCanvas()}));
   panel.appendChild(group);
 }
 
@@ -1022,6 +1158,29 @@ function renderActionsProps(panel,block){
   body.appendChild(dnBtn);
   const delBtn=document.createElement('button');delBtn.className='prop-btn danger';delBtn.textContent='🗑 Удалить блок';delBtn.onclick=()=>removeBlock(block.id);
   body.appendChild(delBtn);
+  panel.appendChild(group);
+}
+
+function renderAdvancedJSONProps(panel,block){
+  const{group,body}=createPropGroup('Расширенно (JSON)',true);
+  const jsonText=JSON.stringify({content:block.content,style:block.style},null,2);
+  const ta=makeTextarea(jsonText,()=>{},8);
+  body.appendChild(ta);
+  const applyBtn=document.createElement('button');
+  applyBtn.className='prop-btn';
+  applyBtn.textContent='Применить JSON';
+  applyBtn.onclick=()=>{
+    try{
+      const parsed=JSON.parse(ta.value);
+      if(parsed.content)block.content=parsed.content;
+      if(parsed.style)block.style=parsed.style;
+      saveHistory();renderCanvas();renderLayers();renderProperties();autoSave();
+      toast('🧩 JSON применён');
+    }catch(err){
+      toast('❌ Невалидный JSON');
+    }
+  };
+  body.appendChild(applyBtn);
   panel.appendChild(group);
 }
 
@@ -1140,22 +1299,32 @@ function showTemplatesModal(){
   html+='</div>';
 
   // Saved templates
-  html+='<div class="saved-templates"><div class="panel-section-title" style="margin:16px 0 8px">Сохранённые шаблоны</div>';
+  html+='<div class="saved-templates"><div class="panel-section-title" style="margin:16px 0 8px">Мои шаблоны</div>';
   if(savedTemplates.length===0){
-    html+='<div style="color:var(--tx3);font-size:11px;padding:10px">Нет сохранённых шаблонов. Используйте кнопку ниже, чтобы сохранить текущий дизайн.</div>';
+    html+='<div style="color:var(--tx3);font-size:11px;padding:10px">Пока пусто. Сохраните текущий дизайн как шаблон.</div>';
+  }else{
+    html+='<div class="template-grid">';
+    savedTemplates.forEach((t,i)=>{
+      const previewBg=t.data?.canvas?.background||'#fff';
+      const textColor=isLightColor(previewBg)?'#333':'#eee';
+      html+=`<div class="template-card" onclick="applySavedTemplate(${i})" title="${t.name||''}">
+        <div class="preview" style="background:${previewBg};color:${textColor};position:relative">
+          <div style="font-size:28px">📄</div>
+          <button class="st-del" style="position:absolute;right:6px;top:6px;background:rgba(0,0,0,.45);color:#fff;border-radius:10px" onclick="event.stopPropagation();deleteSavedTemplate(${i})" title="Удалить">✕</button>
+        </div>
+        <div class="tname">${t.name||('Шаблон '+(i+1))}</div>
+        <div class="tdesc">${new Date(t.date||Date.now()).toLocaleDateString('ru-RU')}</div>
+      </div>`;
+    });
+    html+='</div>';
   }
-  savedTemplates.forEach((t,i)=>{
-    html+=`<div class="saved-template-item" onclick="applySavedTemplate(${i})">
-      <span style="font-size:18px">📄</span>
-      <span class="st-name">${t.name||'Шаблон '+(i+1)}</span>
-      <button class="st-del" onclick="event.stopPropagation();deleteSavedTemplate(${i})" title="Удалить">✕</button>
-    </div>`;
-  });
   html+='</div>';
 
   html+='</div>';
   html+=`<div class="modal-footer">
     <button class="tb-btn" onclick="saveCurrentAsTemplate()">💾 Сохранить текущий дизайн</button>
+    <button class="tb-btn" onclick="exportCurrentTemplate()">⬇ Экспорт шаблона</button>
+    <button class="tb-btn" onclick="importTemplateFile()">⬆ Импорт шаблона</button>
     <button class="tb-btn" onclick="closeModal()">Закрыть</button>
   </div>`;
   modal.innerHTML=html;
@@ -1210,6 +1379,50 @@ function deleteSavedTemplate(index){
   localStorage.setItem('wedding_templates',JSON.stringify(saved));
   showTemplatesModal();
   toast('🗑 Шаблон удалён');
+}
+
+function exportCurrentTemplate(){
+  const name=prompt('Название файла шаблона:',(state.projectName||'template')+'-template');
+  if(!name)return;
+  const payload={
+    version:1,
+    name:state.projectName||'Шаблон',
+    exportedAt:new Date().toISOString(),
+    data:deepClone({canvas:state.canvas,layoutMode:state.layoutMode,blocks:state.blocks})
+  };
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download=name.replace(/[^a-zа-я0-9-_ ]/gi,'_')+'.template.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('⬇ Шаблон экспортирован');
+}
+
+function importTemplateFile(){
+  const inp=document.createElement('input');
+  inp.type='file';
+  inp.accept='.json,.template.json';
+  inp.onchange=e=>{
+    const f=e.target.files?.[0];
+    if(!f)return;
+    const r=new FileReader();
+    r.onload=ev=>{
+      try{
+        const parsed=JSON.parse(ev.target.result);
+        const data=parsed.data||parsed.state||parsed;
+        if(!data.blocks||!Array.isArray(data.blocks)){toast('❌ Это не шаблон');return}
+        const saved=JSON.parse(localStorage.getItem('wedding_templates')||'[]');
+        saved.push({name:parsed.name||f.name.replace(/\..+$/,''),data,date:new Date().toISOString()});
+        localStorage.setItem('wedding_templates',JSON.stringify(saved));
+        showTemplatesModal();
+        toast('⬆ Шаблон импортирован');
+      }catch(err){console.error(err);toast('❌ Ошибка импорта')}
+    };
+    r.readAsText(f);
+  };
+  inp.click();
 }
 
 function isLightColor(hex){
@@ -1350,6 +1563,11 @@ ${state.layoutMode==='flow'?'.block{position:relative}':'.block{position:absolut
 @keyframes slideLeft{from{opacity:0;transform:translateX(-30px)}to{opacity:1;transform:translateX(0)}}
 @keyframes slideRight{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}
 @keyframes zoomIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
+@keyframes flipIn{from{opacity:0;transform:perspective(800px) rotateX(-20deg)}to{opacity:1;transform:perspective(800px) rotateX(0)}}
+@keyframes blurIn{from{opacity:0;filter:blur(10px)}to{opacity:1;filter:blur(0)}}
+@keyframes swingIn{0%{opacity:0;transform:rotate(-8deg) scale(.95)}100%{opacity:1;transform:rotate(0) scale(1)}}
+@keyframes riseScale{from{opacity:0;transform:translateY(40px) scale(.92)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes rotateIn{from{opacity:0;transform:rotate(-8deg)}to{opacity:1;transform:rotate(0)}}
 .anim{opacity:0}
 .anim.visible{animation-fill-mode:both}
 `;
@@ -1417,7 +1635,7 @@ function exportBlock(block,index){
   let animStyle='';
   if(s.animation&&s.animation!=='none'){
     animClass=' anim';
-    animStyle=`;animation:${s.animation} .8s ease both;animation-delay:${index*0.1}s`;
+    animStyle=`;animation:${s.animation} ${s.animationDuration||0.8}s ${s.animationEasing||'ease'} both;animation-delay:${(s.animationDelay??(index*0.1))}s`;
   }
 
   let inner='';
@@ -1469,6 +1687,26 @@ function exportBlock(block,index){
       if(s.textTransform)bs+=`text-transform:${s.textTransform};`;
       if(s.borderWidth)bs+=`border:${s.borderWidth}px solid ${s.borderColor||s.color||'#fff'};`;
       inner=`<div style="text-align:${s.textAlign||'center'}"><a href="${c.link||'#'}" class="btn-el" style="${bs}">${c.text||'Кнопка'}</a></div>`;
+      break;
+    }
+    case 'quote':{
+      const qs=`font-family:'${s.fontFamily||'Cormorant Garamond'}',serif;font-size:${s.fontSize||28}px;font-weight:${s.fontWeight||'400'};color:${s.color||'#444'};text-align:${s.textAlign||'center'};line-height:${s.lineHeight||1.5};font-style:${s.fontStyle||'italic'};`;
+      inner=`<div style="${qs}">❝ ${(c.text||'').replace(/\n/g,'<br>')} ❞<div style="font-size:${Math.max(12,(s.fontSize||28)*0.56)}px;opacity:.82;margin-top:8px">${c.author||''}</div></div>`;
+      break;
+    }
+    case 'schedule':{
+      const rows=(c.items||'').split('\n').filter(Boolean);
+      inner=`<div style="font-family:'${s.fontFamily||'Montserrat'}',sans-serif;font-size:${s.fontSize||15}px;font-weight:${s.fontWeight||'400'};color:${s.color||'#444'};line-height:${s.lineHeight||1.8};letter-spacing:${s.letterSpacing||0}px">`;
+      rows.forEach(row=>{
+        const p=row.split('—');
+        inner+=p.length>1?`<div style="display:flex;justify-content:space-between;gap:10px;border-bottom:1px dashed rgba(0,0,0,.12);padding:6px 0"><strong>${p[0].trim()}</strong><span>${p.slice(1).join('—').trim()}</span></div>`:`<div style="padding:6px 0">${row}</div>`;
+      });
+      inner+='</div>';
+      break;
+    }
+    case 'map':
+    case 'video':{
+      inner=`<iframe src="${c.embedUrl||''}" title="${c.title||'embed'}" style="width:100%;height:${c.height||280}px;border:0;border-radius:${s.borderRadius||10}px;display:block" loading="lazy" allowfullscreen></iframe>`;
       break;
     }
     case 'spacer':
