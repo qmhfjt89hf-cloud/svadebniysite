@@ -105,6 +105,10 @@ input,select,textarea{font-family:inherit;font-size:12px;outline:none;border:non
 .block-divider-line{margin:0 auto}
 .block-button-el{display:inline-block;padding:12px 32px;border-radius:6px;text-decoration:none;font-weight:500;transition:.2s;cursor:pointer;letter-spacing:1px}
 .block-spacer{width:100%}
+.block-container-grid{display:grid;width:100%}
+.container-grid-item{min-height:120px;border:1px dashed rgba(0,0,0,.16);border-radius:12px;padding:14px;display:flex;flex-direction:column;justify-content:center;gap:8px;background:#fafafa}
+.container-grid-item-title{font-weight:600;font-size:14px;color:#333}
+.container-grid-item-text{font-size:12px;color:#666;line-height:1.5}
 .canvas-block[contenteditable="true"]{outline:none}
 
 /* Preview panel */
@@ -373,6 +377,8 @@ const BLOCK_DEFS = {
     defaults:{content:{text:'До скорой встречи на нашем празднике!'},style:{fontFamily:'Playfair Display',fontSize:28,fontWeight:'400',color:'#444',textAlign:'center',padding:30,lineHeight:1.4}}},
   slider:{name:'Слайдер',icon:'🎞️',
     defaults:{content:{images:['https://images.unsplash.com/photo-1519741497674-611481863552?w=1200','https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=1200'],interval:3500},style:{padding:8,borderRadius:10,maxHeight:420}}},
+  containerGrid:{name:'Контейнер-сетка',icon:'🧩',
+    defaults:{content:{layout:'twoColumns',gap:12,items:[{title:'Блок 1',text:'Контент блока'},{title:'Блок 2',text:'Контент блока'}]},style:{padding:12,borderRadius:12,backgroundColor:'#ffffff'}}},
   spacer:{name:'Отступ',icon:'↕️',
     defaults:{content:{height:40},style:{}}},
   custom:{name:'HTML блок',icon:'🔧',
@@ -405,6 +411,30 @@ const BLOCK_SETS = {
     {type:'map',content:{embedUrl:'https://www.google.com/maps?q=Moscow&output=embed',height:260,title:'Локация'},style:{padding:10,borderRadius:12}}
   ]}
 };
+
+const CONTAINER_LAYOUTS = {
+  twoColumns:{label:'2 больших слева/справа',count:2,areas:["left right"],columns:'1fr 1fr'},
+  twoRows:{label:'1 сверху / 1 снизу',count:2,areas:["top","bottom"],columns:'1fr'},
+  leftBigRightStack:{label:'Слева большой + 2 справа',count:3,areas:["left rightTop","left rightBottom"],columns:'1.35fr 1fr'},
+  fourEqual:{label:'4 одинаковых',count:4,areas:["a b","c d"],columns:'1fr 1fr'}
+};
+
+function ensureContainerItems(block){
+  const layoutKey=block?.content?.layout||'twoColumns';
+  const cfg=CONTAINER_LAYOUTS[layoutKey]||CONTAINER_LAYOUTS.twoColumns;
+  block.content.items=Array.isArray(block.content.items)?block.content.items:[];
+  while(block.content.items.length<cfg.count){
+    block.content.items.push({title:`Блок ${block.content.items.length+1}`,text:'Контент блока'});
+  }
+  if(block.content.items.length>cfg.count)block.content.items=block.content.items.slice(0,cfg.count);
+}
+
+function getContainerAreaNames(layoutKey){
+  if(layoutKey==='leftBigRightStack')return ['left','rightTop','rightBottom'];
+  if(layoutKey==='fourEqual')return ['a','b','c','d'];
+  if(layoutKey==='twoRows')return ['top','bottom'];
+  return ['left','right'];
+}
 
 // ===================== STATE =====================
 let state = {
@@ -463,6 +493,7 @@ function addBlock(type,insertIndex=-1){
     w: type==='spacer'?'100%':(type==='image'||type==='gallery'?'100%':'100%'),
     h: 'auto'
   };
+  if(type==='containerGrid')ensureContainerItems(block);
   if(insertIndex>=0)state.blocks.splice(insertIndex,0,block);
   else state.blocks.push(block);
   state.selectedId = block.id;
@@ -643,6 +674,7 @@ function addBlockSet(key){
     w:'100%',
     h:'auto'
   }));
+  prepared.forEach(b=>{if(b.type==='containerGrid')ensureContainerItems(b)});
   state.blocks.push(...prepared);
   state.selectedId=prepared[prepared.length-1]?.id||null;
   saveHistory();
@@ -782,6 +814,8 @@ function renderBlockHTML(block, idx){
       inner=renderImageContent(block);break;
     case 'gallery':
       inner=renderGalleryContent(block);break;
+    case 'containerGrid':
+      inner=renderContainerGridContent(block);break;
     case 'timer': case 'eventTimer':
       inner=renderTimerContent(block);break;
     case 'divider':
@@ -804,6 +838,8 @@ function renderBlockHTML(block, idx){
       inner=block.content.html||'';break;
     case 'slider':
       inner=renderSliderContent(block);break;
+    case 'containerGrid':
+      inner=renderContainerGridContent(block);break;
     default:
       inner=`<div style="padding:20px;color:#999;text-align:center">[${block.type}]</div>`;
   }
@@ -860,6 +896,24 @@ function renderSliderContent(block){
   });
   html+=`</div>`;
   html+=`<script>(function(){const r=document.getElementById('${id}');if(!r)return;const slides=[...r.querySelectorAll('img')];let n=0;setInterval(()=>{slides[n].style.display='none';n=(n+1)%slides.length;slides[n].style.display='block';},${c.interval||3500});})();<\/script>`;
+  return html;
+}
+
+function renderContainerGridContent(block){
+  const c=block.content||{};
+  const s=block.style||{};
+  ensureContainerItems(block);
+  const layoutKey=c.layout||'twoColumns';
+  const cfg=CONTAINER_LAYOUTS[layoutKey]||CONTAINER_LAYOUTS.twoColumns;
+  const gap=c.gap||12;
+  const areas=cfg.areas.map(r=>`"${r}"`).join(' ');
+  const areaNames=getContainerAreaNames(layoutKey);
+  let html=`<div class="block-container-grid" style="gap:${gap}px;grid-template-columns:${cfg.columns};grid-template-areas:${areas};">`;
+  c.items.forEach((item,idx)=>{
+    const area=areaNames[idx]||`slot${idx+1}`;
+    html+=`<div class="container-grid-item" style="grid-area:${area};background:${item.bg||'#fafafa'}"><div class="container-grid-item-title">${item.title||`Блок ${idx+1}`}</div><div class="container-grid-item-text">${(item.text||'').replace(/\n/g,'<br>')}</div></div>`;
+  });
+  html+='</div>';
   return html;
 }
 
@@ -1175,6 +1229,19 @@ function renderContentProps(panel,block){
       gallUpBtn.onclick=()=>{const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.multiple=true;inp.onchange=e=>{Array.from(e.target.files).forEach(f=>{const r=new FileReader();r.onload=ev=>{if(!block.content.images)block.content.images=[];block.content.images.push(ev.target.result);renderCanvas();renderProperties()};r.readAsDataURL(f)})};inp.click()};
       body.appendChild(gallUpBtn);
       addRow(body,'Fit',makeSelect([{value:'contain',label:'Contain'},{value:'cover',label:'Cover'}],block.content.objectFit||'contain',(v)=>{updateBlockContent(block.id,'objectFit',v);renderCanvas()}));
+      break;
+    case 'containerGrid':
+      ensureContainerItems(block);
+      addRow(body,'Макет',makeSelect(Object.entries(CONTAINER_LAYOUTS).map(([value,cfg])=>({value,label:cfg.label})),block.content.layout||'twoColumns',(v)=>{updateBlockContent(block.id,'layout',v);ensureContainerItems(block);renderCanvas();renderProperties()}));
+      addRow(body,'Gap',makeInput('number',block.content.gap||12,(v)=>{updateBlockContent(block.id,'gap',Math.max(0,v));renderCanvas()},{min:0,max:80}));
+      (block.content.items||[]).forEach((item,idx)=>{
+        const card=document.createElement('div');
+        card.style.border='1px solid var(--brd)';card.style.borderRadius='10px';card.style.padding='8px';card.style.marginBottom='8px';
+        addRow(card,`Блок ${idx+1}`,makeInput('text',item.title||'',(v)=>{item.title=v;renderCanvas()}));
+        addRow(card,'Текст',makeTextarea(item.text||'',(v)=>{item.text=v;renderCanvas()},2),false);
+        addRow(card,'Фон',makeColorRow(item.bg||'#fafafa',(v)=>{item.bg=v;renderCanvas()}),false);
+        body.appendChild(card);
+      });
       break;
     case 'timer': case 'eventTimer':
       addRow(body,'Дата',makeInput('datetime-local',block.content.targetDate,(v)=>{updateBlockContent(block.id,'targetDate',v);renderCanvas()}));
@@ -1778,6 +1845,10 @@ ${state.layoutMode==='flow'?`.invitation{display:grid;grid-template-columns:repe
 .gallery-grid img{width:100%;height:auto;aspect-ratio:1/1;object-fit:contain;border-radius:4px;background:#f5f5f8}
 .btn-el{display:inline-block;text-decoration:none;transition:opacity .2s;cursor:pointer}
 .btn-el:hover{opacity:.85}
+.container-grid{display:grid;width:100%}
+.container-grid-item{min-height:120px;border:1px dashed rgba(0,0,0,.16);border-radius:12px;padding:14px;display:flex;flex-direction:column;justify-content:center;gap:8px;background:#fafafa}
+.container-grid-item-title{font-weight:600;font-size:14px;color:#333}
+.container-grid-item-text{font-size:12px;color:#666;line-height:1.5}
 @media (max-width:1024px){body{padding:12px}.invitation{max-width:100%}}
 @media (max-width:768px){.invitation{grid-template-columns:1fr!important}.timer-display{gap:10px;flex-wrap:wrap}}
 ${state.canvas.cursorStyle==='heart'?'*{cursor:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2732%27 height=%2732%27 viewBox=%270 0 32 32%27%3E%3Ctext y=%2724%27 font-size=%2722%27%3E%E2%99%A5%3C/text%3E%3C/svg%3E") 8 8, auto;}':''}
@@ -1976,6 +2047,18 @@ function exportBlock(block,index){
       const imgs=c.images||[];
       inner=`<div data-slider="1" data-interval="${c.interval||3500}" style="position:relative;overflow:hidden;border-radius:${s.borderRadius||state.canvas.photoDefaults?.borderRadius||10}px">`;
       imgs.forEach((src,i)=>{inner+=`<img src="${src}" alt="slide" style="width:100%;display:${i===0?'block':'none'};object-fit:${c.objectFit||state.canvas.photoDefaults?.objectFit||'contain'};max-height:${s.maxHeight||420}px;background:#f5f5f8">`;});
+      inner+='</div>';
+      break;
+    }
+    case 'containerGrid':{
+      ensureContainerItems(block);
+      const layoutKey=c.layout||'twoColumns';
+      const cfg=CONTAINER_LAYOUTS[layoutKey]||CONTAINER_LAYOUTS.twoColumns;
+      const gap=c.gap||12;
+      const areas=cfg.areas.map(r=>`"${r}"`).join(' ');
+      const areaNames=getContainerAreaNames(layoutKey);
+      inner=`<div class="container-grid" style="gap:${gap}px;grid-template-columns:${cfg.columns};grid-template-areas:${areas};">`;
+      c.items.forEach((item,idx)=>{const area=areaNames[idx]||`slot${idx+1}`;inner+=`<div class="container-grid-item" style="grid-area:${area};background:${item.bg||'#fafafa'}"><div class="container-grid-item-title">${item.title||`Блок ${idx+1}`}</div><div class="container-grid-item-text">${(item.text||'').replace(/\n/g,'<br>')}</div></div>`;});
       inner+='</div>';
       break;
     }
