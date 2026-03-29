@@ -483,7 +483,20 @@ function undo(){if(historyIndex>0){historyIndex--;state=deepClone(history[histor
 function redo(){if(historyIndex<history.length-1){historyIndex++;state=deepClone(history[historyIndex]);fullRender();toast('↪ Повторено')}}
 function getBlock(id){return state.blocks.find(b=>b.id===id)}
 function getBlockIndex(id){return state.blocks.findIndex(b=>b.id===id)}
-function getTopLevelBlocks(){return state.blocks.filter(b=>!b.parentId)}
+function getContainerChildIds(){
+  const used=new Set();
+  state.blocks.forEach(block=>{
+    if(block.type!=='containerGrid'||!Array.isArray(block.content?.items))return;
+    block.content.items.forEach(item=>{
+      if(item?.childId)used.add(item.childId);
+    });
+  });
+  return used;
+}
+function getRootBlocks(){
+  const used=getContainerChildIds();
+  return state.blocks.filter(b=>!used.has(b.id));
+}
 function findContainerById(containerId){const b=getBlock(containerId);return b&&b.type==='containerGrid'?b:null}
 function findContainerSlotByChildId(childId){
   for(const block of state.blocks){
@@ -493,10 +506,19 @@ function findContainerSlotByChildId(childId){
   }
   return null;
 }
-function detachBlockFromContainer(blockId){
-  const slot=findContainerSlotByChildId(blockId);
-  if(!slot)return;
-  slot.container.content.items[slot.slotIndex].childId=null;
+function removeBlockFromContainers(blockId,skipContainerId=null){
+  let removed=false;
+  state.blocks.forEach(block=>{
+    if(block.type!=='containerGrid'||!Array.isArray(block.content?.items))return;
+    if(skipContainerId&&block.id===skipContainerId)return;
+    block.content.items.forEach(item=>{
+      if(item?.childId===blockId){
+        item.childId=null;
+        removed=true;
+      }
+    });
+  });
+  return removed;
 }
 function canDropBlockIntoContainer(blockId,containerId){
   if(blockId===containerId)return false;
@@ -510,38 +532,32 @@ function moveBlockToContainerSlot(blockId,containerId,slotIndex){
   if(!canDropBlockIntoContainer(blockId,containerId))return false;
   const block=getBlock(blockId);
   const container=findContainerById(containerId);
+  if(!block||!container)return false;
   ensureContainerItems(container);
   const slot=container.content.items[slotIndex];
   if(!slot)return false;
-  if(slot.childId&&slot.childId!==blockId){
-    const prev=getBlock(slot.childId);
-    if(prev)prev.parentId=null;
-  }
-  detachBlockFromContainer(blockId);
-  block.parentId=container.id;
+  removeBlockFromContainers(blockId);
+  if(slot.childId&&slot.childId!==blockId)removeBlockFromContainers(slot.childId,container.id);
   slot.childId=block.id;
   state.selectedId=block.id;
   return true;
 }
-function normalizeBlocksHierarchy(){
-  state.blocks.forEach(b=>{if(b.parentId===undefined)b.parentId=null;});
+function normalizeContainerReferences(){
+  const used=new Set();
   state.blocks.forEach(container=>{
     if(container.type!=='containerGrid')return;
     ensureContainerItems(container);
     container.content.items.forEach(item=>{
-      if(!item.childId)return;
+      if(!item?.childId)return;
       const child=getBlock(item.childId);
-      if(!child||child.type==='containerGrid'){item.childId=null;return;}
-      child.parentId=container.id;
+      if(!child||child.type==='containerGrid'||used.has(item.childId)){
+        item.childId=null;
+        return;
+      }
+      used.add(item.childId);
     });
   });
-  state.blocks.forEach(b=>{
-    if(!b.parentId)return;
-    const p=getBlock(b.parentId);
-    if(!p||p.type!=='containerGrid'){b.parentId=null;return;}
-    const hasRef=(p.content.items||[]).some(i=>i.childId===b.id);
-    if(!hasRef)b.parentId=null;
-  });
+  state.blocks.forEach(block=>{if(block.parentId!==undefined)delete block.parentId;});
 }
 
 // ===================== STATE MANAGEMENT =====================
@@ -555,7 +571,6 @@ function addBlock(type,insertIndex=-1){
     style: deepClone(def.defaults.style),
     visible: true,
     locked: false,
-    parentId: null,
     x: 50, y: (state.blocks.length*80)+50,
     w: type==='spacer'?'100%':(type==='image'||type==='gallery'?'100%':'100%'),
     h: 'auto'
@@ -578,12 +593,10 @@ function removeBlock(id){
   if(block.type==='containerGrid'&&Array.isArray(block.content?.items)){
     block.content.items.forEach(item=>{
       if(!item?.childId)return;
-      const child=getBlock(item.childId);
-      if(child)child.parentId=null;
       item.childId=null;
     });
   }
-  detachBlockFromContainer(id);
+  removeBlockFromContainers(id);
   state.blocks.splice(idx,1);
   if(state.selectedId===id)state.selectedId=null;
   saveHistory();
@@ -597,7 +610,10 @@ function duplicateBlock(id){
   if(!src)return;
   const dup = deepClone(src);
   dup.id = uid();
-  dup.parentId = null;
+  if(dup.parentId!==undefined)delete dup.parentId;
+  if(dup.type==='containerGrid'&&Array.isArray(dup.content?.items)){
+    dup.content.items.forEach(item=>{if(item)item.childId=null;});
+  }
   dup.y += 20;
   dup.x += 20;
   const idx = getBlockIndex(id);
@@ -747,7 +763,6 @@ function addBlockSet(key){
     style:deepClone(b.style||{}),
     visible:true,
     locked:false,
-    parentId:null,
     x:50,
     y:(state.blocks.length+idx)*80+50,
     w:'100%',
@@ -771,7 +786,7 @@ function renderLayers(){
     const def=BLOCK_DEFS[b.type]||{icon:'📦',name:b.type};
     const sel=state.selectedId===b.id?'selected':'';
     const preview=b.content.text?(b.content.text.substring(0,20)+(b.content.text.length>20?'…':'')):def.name;
-    const nestedLabel=b.parentId?'↳ ':'';
+    const nestedLabel=findContainerSlotByChildId(b.id)?'↳ ':'';
     html+=`<div class="layer-item ${sel}" onclick="selectBlock('${b.id}')">
       <span class="layer-icon">${def.icon}</span>
       <span class="layer-name" title="${preview}">${nestedLabel}${preview}</span>
@@ -808,7 +823,7 @@ function renderCanvas(){
   }
 
   let html='';
-  getTopLevelBlocks().forEach((block,idx)=>{
+  getRootBlocks().forEach((block,idx)=>{
     if(!block.visible&&block.visible!==undefined&&block.visible===false)return;
     html+=renderBlockHTML(block,idx);
   });
@@ -878,7 +893,7 @@ function renderCanvas(){
       handle:'.block-drag-handle',
       ghostClass:'sortable-ghost',
       onEnd:(evt)=>{
-        const roots=getTopLevelBlocks();
+        const roots=getRootBlocks();
         const moved=roots[evt.oldIndex];
         if(!moved)return;
         const from=state.blocks.findIndex(b=>b.id===moved.id);
@@ -1044,7 +1059,7 @@ function renderContainerGridContent(block){
     if(child&&child.visible!==false){
       html+=renderNestedBlockHTML(child);
     }else{
-      html+=`<div class="container-grid-item-title">${item.title||`Слот ${idx+1}`}</div><div class="container-grid-item-text">${(item.text||'Перетащите блок за иконку ⠿ сюда').replace(/\n/g,'<br>')}</div>`;
+      html+=`<div class="container-grid-item-title">${item.title||`Слот ${idx+1}`}</div><div class="container-grid-item-text">${(item.text||'Drop block here').replace(/\n/g,'<br>')}</div>`;
     }
     html+='</div>';
   });
@@ -1410,7 +1425,7 @@ function renderContentProps(panel,block){
           const clearBtn=document.createElement('button');
           clearBtn.className='prop-btn';
           clearBtn.textContent='Очистить слот';
-          clearBtn.onclick=()=>{child.parentId=null;item.childId=null;saveHistory();fullRender();autoSave();};
+          clearBtn.onclick=()=>{item.childId=null;saveHistory();fullRender();autoSave();};
           card.appendChild(clearBtn);
         }
         addRow(card,`Блок ${idx+1}`,makeInput('text',item.title||'',(v)=>{item.title=v;renderCanvas()}));
@@ -1567,13 +1582,12 @@ function renderPositionProps(panel,block){
 // ---- Actions Props ----
 function renderActionsProps(panel,block){
   const{group,body}=createPropGroup('Действия');
-  if(block.parentId){
+  if(findContainerSlotByChildId(block.id)){
     const outBtn=document.createElement('button');
     outBtn.className='prop-btn';
     outBtn.textContent='↗ Вынести из контейнера';
     outBtn.onclick=()=>{
-      detachBlockFromContainer(block.id);
-      block.parentId=null;
+      removeBlockFromContainers(block.id);
       saveHistory();fullRender();autoSave();
     };
     body.appendChild(outBtn);
@@ -1794,10 +1808,10 @@ function applyTemplate(key){
   state.canvas=data.canvas;
   state.layoutMode=data.layoutMode||'flow';
   state.blocks=data.blocks.map(b=>{
-    b.id=uid();b.visible=true;b.locked=false;b.parentId=null;b.x=b.x||50;b.y=b.y||50;b.w=b.w||'100%';b.h=b.h||'auto';
+    b.id=uid();b.visible=true;b.locked=false;delete b.parentId;b.x=b.x||50;b.y=b.y||50;b.w=b.w||'100%';b.h=b.h||'auto';
     return b;
   });
-  normalizeBlocksHierarchy();
+  normalizeContainerReferences();
   state.selectedId=null;
   saveHistory();fullRender();autoSave();closeModal();
   toast('✅ Шаблон «'+tmpl.name+'» применён');
@@ -1820,8 +1834,8 @@ function applySavedTemplate(index){
   const data=deepClone(tmpl.data);
   state.canvas=data.canvas;
   state.layoutMode=data.layoutMode||'flow';
-  state.blocks=data.blocks.map(b=>{if(!b.id)b.id=uid();if(b.parentId===undefined)b.parentId=null;return b});
-  normalizeBlocksHierarchy();
+  state.blocks=data.blocks.map(b=>{if(!b.id)b.id=uid();delete b.parentId;return b});
+  normalizeContainerReferences();
   state.selectedId=null;
   saveHistory();fullRender();autoSave();closeModal();
   toast('✅ Шаблон применён');
@@ -1956,7 +1970,7 @@ function loadAutoSave(){
     const data=JSON.parse(localStorage.getItem('wedding_designer_autosave'));
     if(data&&data.state){
       state.blocks=data.state.blocks||[];
-      normalizeBlocksHierarchy();
+      normalizeContainerReferences();
       state.canvas=normalizeCanvas(data.state.canvas||state.canvas);
       state.layoutMode=data.state.layoutMode||'flow';
       state.projectName=data.state.projectName||'Мое приглашение';
@@ -1992,7 +2006,7 @@ function loadProjectFile(){
         const data=JSON.parse(ev.target.result);
         if(data.state){
           state.blocks=data.state.blocks||[];
-          normalizeBlocksHierarchy();
+          normalizeContainerReferences();
           state.canvas=normalizeCanvas(data.state.canvas||state.canvas);
           state.layoutMode=data.state.layoutMode||'flow';
           state.projectName=data.state.projectName||data.name||'Мое приглашение';
@@ -2074,7 +2088,7 @@ ${state.canvas.cursorStyle==='star'?'*{cursor:url("data:image/svg+xml,%3Csvg xml
 <div class="invitation">
 `;
 
-  getTopLevelBlocks().forEach((block,i)=>{
+  getRootBlocks().forEach((block,i)=>{
     if(block.visible===false)return;
     html+=exportBlock(block,i);
   });
@@ -2318,12 +2332,12 @@ function applyTemplateData(data){
   state.blocks=(d.blocks||[]).map(b=>{
     if(!b.id)b.id=uid();
     if(b.visible===undefined)b.visible=true;
-    if(b.parentId===undefined)b.parentId=null;
+    if(b.parentId!==undefined)delete b.parentId;
     if(!b.x)b.x=50;if(!b.y)b.y=50;
     if(!b.w)b.w='100%';if(!b.h)b.h='auto';
     return b;
   });
-  normalizeBlocksHierarchy();
+  normalizeContainerReferences();
   state.selectedId=null;
 }
 
