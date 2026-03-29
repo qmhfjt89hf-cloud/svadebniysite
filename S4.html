@@ -40,6 +40,8 @@ input,select,textarea{font-family:inherit;font-size:12px;outline:none;border:non
 
 /* WORKSPACE */
 #workspace{display:flex;flex:1;overflow:hidden}
+#workspace.preview-visible #canvas-area{flex:1.05}
+#workspace.preview-visible #preview-panel{display:flex}
 
 /* LEFT PANEL */
 #left-panel{width:250px;background:var(--bg1);backdrop-filter:blur(18px) saturate(170%);border-right:1px solid var(--brd);display:flex;flex-direction:column;flex-shrink:0;overflow:hidden}
@@ -74,13 +76,13 @@ input,select,textarea{font-family:inherit;font-size:12px;outline:none;border:non
 /* CANVAS AREA */
 #canvas-area{flex:1;background:linear-gradient(180deg,#f7f7fa 0%,#ececf2 100%);display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:34px;position:relative}
 #canvas-wrapper{position:relative;transition:transform .2s}
-#canvas{background:#fff;position:relative;min-height:400px;border-radius:24px;box-shadow:var(--shadow);overflow:hidden}
+#canvas{background:#fff;position:relative;min-height:400px;border-radius:24px;box-shadow:var(--shadow);overflow:visible}
 #canvas.flow-mode .canvas-block{position:relative!important;left:auto!important;top:auto!important}
 #canvas.free-mode{min-height:900px}
 
 /* Canvas blocks */
-.canvas-block{position:relative;cursor:pointer;transition:box-shadow .15s;min-height:10px}
-.canvas-block:hover{box-shadow:inset 0 0 0 1px rgba(201,169,110,.4)}
+.canvas-block{position:relative;cursor:pointer;transition:box-shadow .2s,transform .2s,border-color .2s;min-height:10px;border:1px solid rgba(255,255,255,.5);box-shadow:0 14px 32px rgba(20,20,40,.08),inset 0 1px 0 rgba(255,255,255,.65);backdrop-filter:blur(4px)}
+.canvas-block:hover{box-shadow:0 18px 35px rgba(20,20,40,.13),inset 0 0 0 1px rgba(255,255,255,.75);transform:translateY(-1px)}
 .canvas-block.selected{box-shadow:inset 0 0 0 2px var(--acc)!important;z-index:50}
 .canvas-block.editing{z-index:51}
 .block-drag-handle{position:absolute;top:2px;left:2px;width:18px;height:18px;background:var(--acc);border-radius:3px;display:none;align-items:center;justify-content:center;font-size:10px;cursor:grab;z-index:10;color:#111}
@@ -104,6 +106,13 @@ input,select,textarea{font-family:inherit;font-size:12px;outline:none;border:non
 .block-button-el{display:inline-block;padding:12px 32px;border-radius:6px;text-decoration:none;font-weight:500;transition:.2s;cursor:pointer;letter-spacing:1px}
 .block-spacer{width:100%}
 .canvas-block[contenteditable="true"]{outline:none}
+
+/* Preview panel */
+#preview-panel{width:420px;min-width:340px;max-width:48%;border-left:1px solid var(--brd);background:var(--bg1);backdrop-filter:blur(16px) saturate(170%);display:none;flex-direction:column}
+.preview-header{height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 10px;border-bottom:1px solid var(--brd);font-size:11px;color:var(--tx2)}
+.preview-actions{display:flex;gap:6px}
+.preview-frame-wrap{flex:1;padding:10px}
+#preview-frame{width:100%;height:100%;border:1px solid var(--brd);border-radius:12px;background:#fff}
 
 /* RIGHT PANEL */
 #right-panel{width:290px;background:var(--bg1);backdrop-filter:blur(18px) saturate(170%);border-left:1px solid var(--brd);display:flex;flex-direction:column;flex-shrink:0;overflow:hidden}
@@ -215,6 +224,8 @@ input,select,textarea{font-family:inherit;font-size:12px;outline:none;border:non
     <span class="tb-spacer"></span>
     <button class="tb-btn" onclick="showTemplatesModal()">📋 Шаблоны</button>
     <button class="tb-btn" onclick="randomizeDesign()">🎲 Рандом</button>
+    <button class="tb-btn" id="btn-preview" onclick="togglePreviewPanel()">👁 Превью</button>
+    <button class="tb-btn" onclick="openPreviewWindow()">🪟 Окно</button>
     <div class="toolbar-sep"></div>
     <button class="tb-btn" onclick="saveProjectFile()">💾 Сохранить</button>
     <button class="tb-btn" onclick="loadProjectFile()">📂 Загрузить</button>
@@ -235,6 +246,17 @@ input,select,textarea{font-family:inherit;font-size:12px;outline:none;border:non
         <div id="canvas" class="flow-mode"></div>
       </div>
     </main>
+    <aside id="preview-panel">
+      <div class="preview-header">
+        <span>Live preview</span>
+        <div class="preview-actions">
+          <button class="tb-btn" onclick="refreshInlinePreview()">↻ Обновить</button>
+        </div>
+      </div>
+      <div class="preview-frame-wrap">
+        <iframe id="preview-frame" title="Preview"></iframe>
+      </div>
+    </aside>
     <aside id="right-panel">
       <div id="right-panel-header">⚙ Свойства</div>
       <div id="right-panel-body"></div>
@@ -350,7 +372,8 @@ let state = {
   layoutMode: 'flow',
   canvas: {width:600,background:'#ffffff',backgroundImage:'',padding:0},
   zoom: 100,
-  projectName: 'Мое приглашение'
+  projectName: 'Мое приглашение',
+  previewVisible: false
 };
 
 let history = [];
@@ -478,6 +501,7 @@ function fullRender(){
 function renderToolbar(){
   document.getElementById('layout-label').textContent=state.layoutMode==='flow'?'Поток':'Свободный';
   document.getElementById('btn-layout').classList.toggle('active',state.layoutMode==='free');
+  document.getElementById('btn-preview').classList.toggle('active',!!state.previewVisible);
   document.getElementById('zoom-label').textContent=state.zoom+'%';
 }
 
@@ -494,6 +518,29 @@ function changeZoom(delta){
   const w=document.getElementById('canvas-wrapper');
   w.style.transform=`scale(${state.zoom/100})`;
   w.style.transformOrigin='top center';
+}
+
+function togglePreviewPanel(){
+  state.previewVisible=!state.previewVisible;
+  const workspace=document.getElementById('workspace');
+  workspace.classList.toggle('preview-visible',state.previewVisible);
+  renderToolbar();
+  if(state.previewVisible)refreshInlinePreview();
+}
+
+function refreshInlinePreview(){
+  const frame=document.getElementById('preview-frame');
+  if(!frame)return;
+  frame.srcdoc=buildExportHTML();
+}
+
+function openPreviewWindow(){
+  const win=window.open('','wedding_preview_window');
+  if(!win){toast('⚠ Разрешите всплывающие окна для предпросмотра');return;}
+  win.document.open();
+  win.document.write(buildExportHTML());
+  win.document.close();
+  toast('🪟 Превью открыто в новом окне');
 }
 
 // ---- Left Panel ----
@@ -625,6 +672,7 @@ function renderCanvas(){
   });
 
   updateTimers();
+  if(state.previewVisible)refreshInlinePreview();
 }
 
 function renderBlockHTML(block, idx){
@@ -641,6 +689,7 @@ function renderBlockHTML(block, idx){
   let blockStyle=posStyle;
   if(s.padding!==undefined)blockStyle+=`padding:${s.padding}px;`;
   if(s.backgroundColor&&s.backgroundColor!=='transparent')blockStyle+=`background-color:${s.backgroundColor};`;
+  if(s.backgroundImage)blockStyle+=`background-image:url('${s.backgroundImage}');background-size:${s.backgroundSize||'cover'};background-position:${s.backgroundPosition||'center'};background-repeat:no-repeat;`;
   if(s.borderRadius)blockStyle+=`border-radius:${s.borderRadius}px;`;
   if(s.opacity!==undefined&&s.opacity!==1)blockStyle+=`opacity:${s.opacity};`;
   if(s.borderWidth)blockStyle+=`border:${s.borderWidth}px solid ${s.borderColor||'#ccc'};`;
@@ -1099,6 +1148,26 @@ function renderBackgroundProps(panel,block){
   const s=block.style;
   const{group,body}=createPropGroup('Фон',true);
   addRow(body,'Цвет фона',makeColorRow(s.backgroundColor||'transparent',(v)=>{updateBlockStyle(block.id,'backgroundColor',v)}),false);
+  addRow(body,'Фото (URL)',makeInput('text',s.backgroundImage||'',(v)=>{updateBlockStyle(block.id,'backgroundImage',v);renderCanvas()}));
+  addRow(body,'Размер',makeSelect([{value:'cover',label:'Cover'},{value:'contain',label:'Contain'},{value:'auto',label:'Auto'}],s.backgroundSize||'cover',(v)=>{updateBlockStyle(block.id,'backgroundSize',v);renderCanvas()}));
+  addRow(body,'Позиция',makeSelect([{value:'center',label:'Center'},{value:'top',label:'Top'},{value:'bottom',label:'Bottom'},{value:'left',label:'Left'},{value:'right',label:'Right'}],s.backgroundPosition||'center',(v)=>{updateBlockStyle(block.id,'backgroundPosition',v);renderCanvas()}));
+  const uploadBtn=document.createElement('button');
+  uploadBtn.className='prop-btn';
+  uploadBtn.textContent='🖼 Загрузить фото в фон';
+  uploadBtn.onclick=()=>{
+    const inp=document.createElement('input');
+    inp.type='file';
+    inp.accept='image/*';
+    inp.onchange=e=>{
+      const f=e.target.files?.[0];
+      if(!f)return;
+      const r=new FileReader();
+      r.onload=ev=>{updateBlockStyle(block.id,'backgroundImage',ev.target.result);renderCanvas();renderProperties();};
+      r.readAsDataURL(f);
+    };
+    inp.click();
+  };
+  body.appendChild(uploadBtn);
   panel.appendChild(group);
 }
 
@@ -1437,29 +1506,53 @@ function isLightColor(hex){
 
 // ===================== RANDOMIZE =====================
 function randomizeDesign(){
+  const templateKeys=Object.keys(BUILTIN_TEMPLATES);
+  const template=BUILTIN_TEMPLATES[templateKeys[Math.floor(Math.random()*templateKeys.length)]];
+  applyTemplateData(template.data);
+
   const palette=PALETTES[Math.floor(Math.random()*PALETTES.length)];
+  const rounded=[10,14,18,24,28][Math.floor(Math.random()*5)];
   state.canvas.background=palette.bg;
-  state.blocks.forEach(b=>{
-    const s=b.style;
-    if(['heading','names'].includes(b.type)){
-      s.fontFamily=palette.font1;
-      s.color=palette.secondary;
-    }else if(['text','date','venue'].includes(b.type)){
-      s.fontFamily=palette.font2;
-      s.color=palette.accent;
-    }else if(b.type==='timer'){
-      s.fontFamily=palette.font2;
-      s.color=palette.secondary;
-    }else if(b.type==='button'){
+  state.canvas.padding=[0,8,16,20][Math.floor(Math.random()*4)];
+
+  const heroPhotos=[
+    'https://images.unsplash.com/photo-1519741497674-611481863552?w=1400&fit=crop',
+    'https://images.unsplash.com/photo-1520854221256-17451cc331bf?w=1400&fit=crop',
+    'https://images.unsplash.com/photo-1522673607200-164d1b6ce486?w=1400&fit=crop'
+  ];
+  const randomHero=heroPhotos[Math.floor(Math.random()*heroPhotos.length)];
+
+  state.blocks.forEach((b,idx)=>{
+    const s=b.style||{};
+    if(['heading','names','quote'].includes(b.type)){s.fontFamily=palette.font1;s.color=palette.secondary;}
+    if(['text','date','venue','schedule','timer'].includes(b.type)){s.fontFamily=palette.font2;s.color=palette.accent;}
+    if(['heading','names','quote','schedule','venue','timer','text'].includes(b.type)&&Math.random()>.45){
+      s.backgroundColor=isLightColor(palette.bg)?'rgba(255,255,255,.56)':'rgba(15,15,25,.44)';
+      s.borderRadius=rounded;
+      s.borderWidth=1;
+      s.borderColor=isLightColor(palette.bg)?'rgba(0,0,0,.08)':'rgba(255,255,255,.12)';
+    }
+    if(b.type==='button'){
       s.fontFamily=palette.font2;
       s.backgroundColor=palette.secondary;
       s.color=isLightColor(palette.secondary)?'#111':'#fff';
-    }else if(b.type==='divider'){
-      s.color=palette.secondary;
+      s.borderRadius=999;
+      s.letterSpacing=1;
+    }
+    if(b.type==='divider'){s.color=palette.secondary;}
+    if(b.type==='image'&&Math.random()>.5){
+      b.content.src=randomHero;
+      s.borderRadius=rounded+4;
+      s.padding=Math.max(0,s.padding||0);
+    }
+    if(idx===0&&Math.random()>.35&&b.type!=='spacer'){
+      s.backgroundImage=randomHero;
+      s.backgroundSize='cover';
+      s.backgroundPosition='center';
     }
   });
   saveHistory();fullRender();autoSave();
-  toast('🎲 Палитра: '+palette.name);
+  toast('🎲 Готовый дизайн: '+template.name+' × '+palette.name);
 }
 
 // ===================== SAVE/LOAD =====================
@@ -1527,7 +1620,7 @@ function loadProjectFile(){
 }
 
 // ===================== EXPORT HTML =====================
-function exportHTML(){
+function buildExportHTML(){
   const usedFonts=new Set();
   state.blocks.forEach(b=>{if(b.style.fontFamily)usedFonts.add(b.style.fontFamily)});
   const fontsURL='https://fonts.googleapis.com/css2?'+Array.from(usedFonts).map(f=>'family='+f.replace(/ /g,'+')+':ital,wght@0,300;0,400;0,500;0,600;0,700;1,400').join('&')+'&display=swap';
@@ -1606,6 +1699,11 @@ document.querySelectorAll('.anim').forEach(el=>observer.observe(el));
   html+=`</body>
 </html>`;
 
+  return html;
+}
+
+function exportHTML(){
+  const html=buildExportHTML();
   const blob=new Blob([html],{type:'text/html;charset=utf-8'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
@@ -1625,6 +1723,7 @@ function exportBlock(block,index){
   }
   if(s.padding!==undefined)style+=`padding:${s.padding}px;`;
   if(s.backgroundColor&&s.backgroundColor!=='transparent')style+=`background-color:${s.backgroundColor};`;
+  if(s.backgroundImage)style+=`background-image:url('${s.backgroundImage}');background-size:${s.backgroundSize||'cover'};background-position:${s.backgroundPosition||'center'};background-repeat:no-repeat;`;
   if(s.borderRadius)style+=`border-radius:${s.borderRadius}px;`;
   if(s.opacity!==undefined&&s.opacity!==1)style+=`opacity:${s.opacity};`;
   if(s.borderWidth)style+=`border:${s.borderWidth}px solid ${s.borderColor||'#ccc'};`;
