@@ -3,34 +3,35 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>💍 Wedding Invitation Designer Pro</title>
+<title>💍 Wedding Invitation Designer — Apple Edition</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=Dancing+Script:wght@400;700&family=Lora:ital,wght@0,400;0,700;1,400&family=Montserrat:wght@300;400;500;600;700&family=Raleway:wght@300;400;600&family=Josefin+Sans:wght@300;400;600&family=Poiret+One&family=Comfortaa:wght@300;400;700&family=Alex+Brush&family=Sacramento&family=Cinzel:wght@400;700&family=Philosopher:ital,wght@0,400;0,700;1,400&family=Caveat:wght@400;700&family=Parisienne&family=Marck+Script&family=Neucha&family=Tangerine:wght@400;700&family=Amatic+SC:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=Dancing+Script:wght@400;700&family=Lora:ital,wght@0,400;0,700;1,400&family=Montserrat:wght@300;400;500;600;700&family=Raleway:wght@300;400;600&family=Josefin+Sans:wght@300;400;600&family=Poiret+One&family=Comfortaa:wght@300;400;700&family=Alex+Brush&family=Sacramento&family=Cinzel:wght@400;700&family=Philosopher:ital,wght@0,400;0,700;1,400&family=Caveat:wght@400;700&family=Parisienne&family=Marck+Script&family=Neucha&family=Tangerine:wght@400;700&family=Amatic+SC:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
---bg0:#0c0c18;--bg1:#12122a;--bg2:#1a1a36;--bg3:#222248;--bg4:#2c2c58;
---tx1:#eeeef6;--tx2:#a0a0c0;--tx3:#6a6a90;
---acc:#c9a96e;--acc2:#dbb87d;--rose:#e8b4b8;
---brd:#28284a;--danger:#e74c3c;--ok:#2ecc71;
---radius:8px;
+--bg0:#f5f5f7;--bg1:rgba(255,255,255,.78);--bg2:#ffffff;--bg3:#f2f2f7;--bg4:#e9e9ef;
+--tx1:#1d1d1f;--tx2:#515154;--tx3:#86868b;
+--acc:#0071e3;--acc2:#0077ed;--rose:#f5f5f7;
+--brd:rgba(0,0,0,.08);--danger:#d70015;--ok:#1d9a52;
+--shadow:0 18px 50px rgba(0,0,0,.08);
+--radius:14px;
 }
-body{font-family:'Montserrat',sans-serif;background:var(--bg0);color:var(--tx1);overflow:hidden;height:100vh;font-size:12px;user-select:none}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Inter','Segoe UI',sans-serif;background:radial-gradient(circle at top,#fff,#f2f2f7 45%,#ececf2 100%);color:var(--tx1);overflow:hidden;height:100vh;font-size:12px;user-select:none}
 ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--brd);border-radius:3px}
 button{font-family:inherit;cursor:pointer;border:none;outline:none;font-size:12px}
 input,select,textarea{font-family:inherit;font-size:12px;outline:none;border:none}
 #app{display:flex;flex-direction:column;height:100vh}
 
 /* TOOLBAR */
-#toolbar{display:flex;align-items:center;height:44px;background:var(--bg1);border-bottom:1px solid var(--brd);padding:0 12px;flex-shrink:0;z-index:100;gap:6px}
-.toolbar-logo{font-family:'Great Vibes',cursive;font-size:20px;color:var(--acc);margin-right:16px;white-space:nowrap}
+#toolbar{display:flex;align-items:center;height:54px;background:var(--bg1);backdrop-filter:blur(22px) saturate(180%);border-bottom:1px solid var(--brd);padding:0 14px;flex-shrink:0;z-index:100;gap:8px}
+.toolbar-logo{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Inter',sans-serif;font-size:16px;font-weight:700;letter-spacing:-.2px;color:var(--tx1);margin-right:14px;white-space:nowrap}
 .toolbar-sep{width:1px;height:24px;background:var(--brd);margin:0 6px}
-.tb-btn{background:var(--bg3);color:var(--tx1);padding:6px 12px;border-radius:6px;display:flex;align-items:center;gap:5px;transition:.15s;white-space:nowrap;font-size:11px}
-.tb-btn:hover{background:var(--bg4)}
-.tb-btn.active{background:var(--acc);color:#111}
-.tb-btn.accent{background:var(--acc);color:#111;font-weight:600}
+.tb-btn{background:var(--bg2);color:var(--tx1);padding:8px 12px;border-radius:999px;display:flex;align-items:center;gap:5px;transition:.2s;white-space:nowrap;font-size:11px;border:1px solid var(--brd);box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.tb-btn:hover{background:#fff;transform:translateY(-1px);box-shadow:0 6px 18px rgba(0,0,0,.08)}
+.tb-btn.active{background:var(--acc);color:#fff;border-color:transparent}
+.tb-btn.accent{background:linear-gradient(135deg,var(--acc),var(--acc2));color:#fff;font-weight:600;border-color:transparent}
 .tb-btn.accent:hover{background:var(--acc2)}
 .tb-btn.danger{background:var(--danger);color:#fff}
 .tb-spacer{flex:1}
@@ -41,7 +42,7 @@ input,select,textarea{font-family:inherit;font-size:12px;outline:none;border:non
 #workspace{display:flex;flex:1;overflow:hidden}
 
 /* LEFT PANEL */
-#left-panel{width:240px;background:var(--bg1);border-right:1px solid var(--brd);display:flex;flex-direction:column;flex-shrink:0;overflow:hidden}
+#left-panel{width:250px;background:var(--bg1);backdrop-filter:blur(18px) saturate(170%);border-right:1px solid var(--brd);display:flex;flex-direction:column;flex-shrink:0;overflow:hidden}
 .panel-tabs{display:flex;border-bottom:1px solid var(--brd)}
 .panel-tab{flex:1;padding:10px 8px;text-align:center;color:var(--tx2);cursor:pointer;border-bottom:2px solid transparent;transition:.15s;font-size:11px;font-weight:500}
 .panel-tab.active{color:var(--acc);border-bottom-color:var(--acc)}
@@ -71,9 +72,9 @@ input,select,textarea{font-family:inherit;font-size:12px;outline:none;border:non
 .layer-btn.del:hover{color:var(--danger)}
 
 /* CANVAS AREA */
-#canvas-area{flex:1;background:var(--bg0);display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:30px;position:relative}
+#canvas-area{flex:1;background:linear-gradient(180deg,#f7f7fa 0%,#ececf2 100%);display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:34px;position:relative}
 #canvas-wrapper{position:relative;transition:transform .2s}
-#canvas{background:#fff;position:relative;min-height:400px;box-shadow:0 4px 40px rgba(0,0,0,.5);overflow:hidden}
+#canvas{background:#fff;position:relative;min-height:400px;border-radius:24px;box-shadow:var(--shadow);overflow:hidden}
 #canvas.flow-mode .canvas-block{position:relative!important;left:auto!important;top:auto!important}
 #canvas.free-mode{min-height:900px}
 
@@ -105,10 +106,10 @@ input,select,textarea{font-family:inherit;font-size:12px;outline:none;border:non
 .canvas-block[contenteditable="true"]{outline:none}
 
 /* RIGHT PANEL */
-#right-panel{width:280px;background:var(--bg1);border-left:1px solid var(--brd);display:flex;flex-direction:column;flex-shrink:0;overflow:hidden}
+#right-panel{width:290px;background:var(--bg1);backdrop-filter:blur(18px) saturate(170%);border-left:1px solid var(--brd);display:flex;flex-direction:column;flex-shrink:0;overflow:hidden}
 #right-panel-header{padding:10px 12px;border-bottom:1px solid var(--brd);font-weight:600;font-size:12px;color:var(--acc);display:flex;align-items:center;gap:6px}
 #right-panel-body{flex:1;overflow-y:auto;padding:10px}
-.prop-group{margin-bottom:12px;background:var(--bg2);border-radius:var(--radius);overflow:hidden;border:1px solid var(--brd)}
+.prop-group{margin-bottom:12px;background:var(--bg2);border-radius:var(--radius);overflow:hidden;border:1px solid var(--brd);box-shadow:0 8px 24px rgba(0,0,0,.05)}
 .prop-group-title{padding:8px 10px;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--tx3);font-weight:700;background:var(--bg3);cursor:pointer;display:flex;justify-content:space-between;align-items:center}
 .prop-group-title::after{content:'▾';font-size:10px}
 .prop-group.collapsed .prop-group-body{display:none}
@@ -119,8 +120,8 @@ input,select,textarea{font-family:inherit;font-size:12px;outline:none;border:non
 .prop-row.horizontal .prop-label{width:70px;flex-shrink:0}
 .prop-row.horizontal .prop-input,.prop-row.horizontal .prop-select{flex:1}
 .prop-label{font-size:10px;color:var(--tx2);font-weight:500;text-transform:uppercase;letter-spacing:.5px}
-.prop-input,.prop-select,.prop-textarea{background:var(--bg4);color:var(--tx1);padding:6px 8px;border-radius:5px;width:100%;transition:.15s}
-.prop-input:focus,.prop-select:focus,.prop-textarea:focus{box-shadow:0 0 0 1px var(--acc)}
+.prop-input,.prop-select,.prop-textarea{background:var(--bg3);color:var(--tx1);padding:8px 10px;border-radius:10px;width:100%;transition:.15s;border:1px solid transparent}
+.prop-input:focus,.prop-select:focus,.prop-textarea:focus{box-shadow:0 0 0 3px rgba(0,113,227,.2);border-color:var(--acc)}
 .prop-textarea{resize:vertical;min-height:50px;font-size:12px;line-height:1.5}
 .prop-select{cursor:pointer;-webkit-appearance:none;padding-right:20px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236a6a90'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center}
 .prop-select option{background:var(--bg3);color:var(--tx1)}
@@ -182,14 +183,14 @@ input,select,textarea{font-family:inherit;font-size:12px;outline:none;border:non
 .anim-zoomIn{animation:zoomIn .8s ease both}
 
 /* Toast */
-.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--bg3);color:var(--tx1);padding:10px 24px;border-radius:8px;font-size:12px;z-index:2000;border:1px solid var(--brd);box-shadow:0 8px 30px rgba(0,0,0,.4);opacity:0;transition:.3s;pointer-events:none}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(40,40,42,.94);color:#fff;padding:10px 24px;border-radius:999px;font-size:12px;z-index:2000;border:1px solid rgba(255,255,255,.1);box-shadow:0 12px 30px rgba(0,0,0,.2);opacity:0;transition:.3s;pointer-events:none}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(-10px)}
 </style>
 </head>
 <body>
 <div id="app">
   <header id="toolbar">
-    <div class="toolbar-logo">Wedding Designer</div>
+    <div class="toolbar-logo"> Wedding Designer</div>
     <div class="toolbar-sep"></div>
     <button class="tb-btn" id="btn-layout" onclick="toggleLayout()" title="Режим раскладки">📐 <span id="layout-label">Поток</span></button>
     <div class="toolbar-sep"></div>
