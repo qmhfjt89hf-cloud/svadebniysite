@@ -106,7 +106,13 @@ input,select,textarea{font-family:inherit;font-size:12px;outline:none;border:non
 .block-button-el{display:inline-block;padding:12px 32px;border-radius:6px;text-decoration:none;font-weight:500;transition:.2s;cursor:pointer;letter-spacing:1px}
 .block-spacer{width:100%}
 .block-container-grid{display:grid;width:100%}
-.container-grid-item{min-height:120px;border:1px dashed rgba(0,0,0,.16);border-radius:12px;padding:14px;display:flex;flex-direction:column;justify-content:center;gap:8px;background:#fafafa}
+.container-grid-item{min-height:120px;border:1px dashed rgba(0,0,0,.16);border-radius:12px;padding:14px;display:flex;flex-direction:column;justify-content:center;gap:8px;background:#fafafa;transition:border-color .2s,background-color .2s}
+.container-grid-item.drop-ready{border-color:var(--acc);background:#eef6ff}
+.container-grid-item.empty{align-items:center;text-align:center;color:#667;justify-content:center}
+.container-grid-item .nested-canvas-block{width:100%}
+.nested-canvas-block{position:relative;border:1px solid rgba(0,0,0,.08);border-radius:10px;padding:10px;background:#fff}
+.nested-canvas-block.selected{box-shadow:inset 0 0 0 2px var(--acc)}
+.nested-block-label{position:absolute;right:8px;top:8px;font-size:10px;padding:2px 6px;border-radius:999px;background:rgba(0,0,0,.08);color:#333}
 .container-grid-item-title{font-weight:600;font-size:14px;color:#333}
 .container-grid-item-text{font-size:12px;color:#666;line-height:1.5}
 .canvas-block[contenteditable="true"]{outline:none}
@@ -477,6 +483,66 @@ function undo(){if(historyIndex>0){historyIndex--;state=deepClone(history[histor
 function redo(){if(historyIndex<history.length-1){historyIndex++;state=deepClone(history[historyIndex]);fullRender();toast('↪ Повторено')}}
 function getBlock(id){return state.blocks.find(b=>b.id===id)}
 function getBlockIndex(id){return state.blocks.findIndex(b=>b.id===id)}
+function getTopLevelBlocks(){return state.blocks.filter(b=>!b.parentId)}
+function findContainerById(containerId){const b=getBlock(containerId);return b&&b.type==='containerGrid'?b:null}
+function findContainerSlotByChildId(childId){
+  for(const block of state.blocks){
+    if(block.type!=='containerGrid'||!Array.isArray(block.content?.items))continue;
+    const idx=block.content.items.findIndex(item=>item?.childId===childId);
+    if(idx>=0)return{container:block,slotIndex:idx};
+  }
+  return null;
+}
+function detachBlockFromContainer(blockId){
+  const slot=findContainerSlotByChildId(blockId);
+  if(!slot)return;
+  slot.container.content.items[slot.slotIndex].childId=null;
+}
+function canDropBlockIntoContainer(blockId,containerId){
+  if(blockId===containerId)return false;
+  const block=getBlock(blockId);
+  if(!block||block.type==='containerGrid')return false;
+  const container=findContainerById(containerId);
+  if(!container)return false;
+  return true;
+}
+function moveBlockToContainerSlot(blockId,containerId,slotIndex){
+  if(!canDropBlockIntoContainer(blockId,containerId))return false;
+  const block=getBlock(blockId);
+  const container=findContainerById(containerId);
+  ensureContainerItems(container);
+  const slot=container.content.items[slotIndex];
+  if(!slot)return false;
+  if(slot.childId&&slot.childId!==blockId){
+    const prev=getBlock(slot.childId);
+    if(prev)prev.parentId=null;
+  }
+  detachBlockFromContainer(blockId);
+  block.parentId=container.id;
+  slot.childId=block.id;
+  state.selectedId=block.id;
+  return true;
+}
+function normalizeBlocksHierarchy(){
+  state.blocks.forEach(b=>{if(b.parentId===undefined)b.parentId=null;});
+  state.blocks.forEach(container=>{
+    if(container.type!=='containerGrid')return;
+    ensureContainerItems(container);
+    container.content.items.forEach(item=>{
+      if(!item.childId)return;
+      const child=getBlock(item.childId);
+      if(!child||child.type==='containerGrid'){item.childId=null;return;}
+      child.parentId=container.id;
+    });
+  });
+  state.blocks.forEach(b=>{
+    if(!b.parentId)return;
+    const p=getBlock(b.parentId);
+    if(!p||p.type!=='containerGrid'){b.parentId=null;return;}
+    const hasRef=(p.content.items||[]).some(i=>i.childId===b.id);
+    if(!hasRef)b.parentId=null;
+  });
+}
 
 // ===================== STATE MANAGEMENT =====================
 function addBlock(type,insertIndex=-1){
@@ -489,6 +555,7 @@ function addBlock(type,insertIndex=-1){
     style: deepClone(def.defaults.style),
     visible: true,
     locked: false,
+    parentId: null,
     x: 50, y: (state.blocks.length*80)+50,
     w: type==='spacer'?'100%':(type==='image'||type==='gallery'?'100%':'100%'),
     h: 'auto'
@@ -507,6 +574,16 @@ function addBlock(type,insertIndex=-1){
 function removeBlock(id){
   const idx = getBlockIndex(id);
   if(idx<0)return;
+  const block=state.blocks[idx];
+  if(block.type==='containerGrid'&&Array.isArray(block.content?.items)){
+    block.content.items.forEach(item=>{
+      if(!item?.childId)return;
+      const child=getBlock(item.childId);
+      if(child)child.parentId=null;
+      item.childId=null;
+    });
+  }
+  detachBlockFromContainer(id);
   state.blocks.splice(idx,1);
   if(state.selectedId===id)state.selectedId=null;
   saveHistory();
@@ -520,6 +597,7 @@ function duplicateBlock(id){
   if(!src)return;
   const dup = deepClone(src);
   dup.id = uid();
+  dup.parentId = null;
   dup.y += 20;
   dup.x += 20;
   const idx = getBlockIndex(id);
@@ -669,6 +747,7 @@ function addBlockSet(key){
     style:deepClone(b.style||{}),
     visible:true,
     locked:false,
+    parentId:null,
     x:50,
     y:(state.blocks.length+idx)*80+50,
     w:'100%',
@@ -692,9 +771,10 @@ function renderLayers(){
     const def=BLOCK_DEFS[b.type]||{icon:'📦',name:b.type};
     const sel=state.selectedId===b.id?'selected':'';
     const preview=b.content.text?(b.content.text.substring(0,20)+(b.content.text.length>20?'…':'')):def.name;
+    const nestedLabel=b.parentId?'↳ ':'';
     html+=`<div class="layer-item ${sel}" onclick="selectBlock('${b.id}')">
       <span class="layer-icon">${def.icon}</span>
-      <span class="layer-name" title="${preview}">${preview}</span>
+      <span class="layer-name" title="${preview}">${nestedLabel}${preview}</span>
       <div class="layer-actions">
         <button class="layer-btn" onclick="event.stopPropagation();moveBlockUp('${b.id}')" title="Вверх">↑</button>
         <button class="layer-btn" onclick="event.stopPropagation();moveBlockDown('${b.id}')" title="Вниз">↓</button>
@@ -728,7 +808,7 @@ function renderCanvas(){
   }
 
   let html='';
-  state.blocks.forEach((block,idx)=>{
+  getTopLevelBlocks().forEach((block,idx)=>{
     if(!block.visible&&block.visible!==undefined&&block.visible===false)return;
     html+=renderBlockHTML(block,idx);
   });
@@ -750,6 +830,44 @@ function renderCanvas(){
       const resizeH=el.querySelector('.resize-handle');
       if(resizeH)resizeH.addEventListener('mousedown',(e)=>startResize(e,id));
     }
+    const dragHandle=el.querySelector('.block-drag-handle');
+    if(dragHandle){
+      dragHandle.setAttribute('draggable','true');
+      dragHandle.addEventListener('dragstart',(e)=>{
+        e.dataTransfer.setData('text/plain',id);
+        e.dataTransfer.effectAllowed='move';
+      });
+    }
+  });
+  canvas.querySelectorAll('.nested-canvas-block').forEach(el=>{
+    const id=el.dataset.id;
+    el.addEventListener('click',(e)=>{e.stopPropagation();selectBlock(id);});
+  });
+
+  canvas.querySelectorAll('.container-grid-item').forEach(slot=>{
+    slot.addEventListener('dragover',(e)=>{
+      const blockId=e.dataTransfer?.getData('text/plain');
+      const containerId=slot.dataset.containerId;
+      if(canDropBlockIntoContainer(blockId,containerId)){
+        e.preventDefault();
+        e.dataTransfer.dropEffect='move';
+        slot.classList.add('drop-ready');
+      }
+    });
+    slot.addEventListener('dragleave',()=>slot.classList.remove('drop-ready'));
+    slot.addEventListener('drop',(e)=>{
+      e.preventDefault();
+      slot.classList.remove('drop-ready');
+      const blockId=e.dataTransfer?.getData('text/plain');
+      const containerId=slot.dataset.containerId;
+      const slotIndex=Number(slot.dataset.slotIndex);
+      if(moveBlockToContainerSlot(blockId,containerId,slotIndex)){
+        saveHistory();
+        fullRender();
+        autoSave();
+        toast('🧩 Блок помещён в контейнер');
+      }
+    });
   });
 
   // Flow mode sortable
@@ -760,8 +878,19 @@ function renderCanvas(){
       handle:'.block-drag-handle',
       ghostClass:'sortable-ghost',
       onEnd:(evt)=>{
-        const item=state.blocks.splice(evt.oldIndex,1)[0];
-        state.blocks.splice(evt.newIndex,0,item);
+        const roots=getTopLevelBlocks();
+        const moved=roots[evt.oldIndex];
+        if(!moved)return;
+        const from=state.blocks.findIndex(b=>b.id===moved.id);
+        if(from<0)return;
+        state.blocks.splice(from,1);
+        const targetRoot=roots[evt.newIndex];
+        if(!targetRoot){
+          state.blocks.push(moved);
+        }else{
+          const insertAt=state.blocks.findIndex(b=>b.id===targetRoot.id);
+          state.blocks.splice(insertAt,0,moved);
+        }
         saveHistory();
         fullRender();
         autoSave();
@@ -901,7 +1030,6 @@ function renderSliderContent(block){
 
 function renderContainerGridContent(block){
   const c=block.content||{};
-  const s=block.style||{};
   ensureContainerItems(block);
   const layoutKey=c.layout||'twoColumns';
   const cfg=CONTAINER_LAYOUTS[layoutKey]||CONTAINER_LAYOUTS.twoColumns;
@@ -911,10 +1039,44 @@ function renderContainerGridContent(block){
   let html=`<div class="block-container-grid" style="gap:${gap}px;grid-template-columns:${cfg.columns};grid-template-areas:${areas};">`;
   c.items.forEach((item,idx)=>{
     const area=areaNames[idx]||`slot${idx+1}`;
-    html+=`<div class="container-grid-item" style="grid-area:${area};background:${item.bg||'#fafafa'}"><div class="container-grid-item-title">${item.title||`Блок ${idx+1}`}</div><div class="container-grid-item-text">${(item.text||'').replace(/\n/g,'<br>')}</div></div>`;
+    const child=item.childId?getBlock(item.childId):null;
+    html+=`<div class="container-grid-item ${child?'':'empty'}" data-container-id="${block.id}" data-slot-index="${idx}" style="grid-area:${area};background:${item.bg||'#fafafa'}">`;
+    if(child&&child.visible!==false){
+      html+=renderNestedBlockHTML(child);
+    }else{
+      html+=`<div class="container-grid-item-title">${item.title||`Слот ${idx+1}`}</div><div class="container-grid-item-text">${(item.text||'Перетащите блок за иконку ⠿ сюда').replace(/\n/g,'<br>')}</div>`;
+    }
+    html+='</div>';
   });
   html+='</div>';
   return html;
+}
+
+function renderNestedBlockHTML(block){
+  const selected=state.selectedId===block.id?' selected':'';
+  const name=(BLOCK_DEFS[block.type]||{name:block.type}).name;
+  let inner='';
+  switch(block.type){
+    case 'heading': case 'text': case 'names': case 'date': case 'venue':
+    case 'cover': case 'greeting': case 'loveStory': case 'eventDate': case 'location':
+    case 'dressCode': case 'wishes': case 'contacts': case 'ending':
+      inner=renderTextContent(block);break;
+    case 'image': case 'photo': inner=renderImageContent(block);break;
+    case 'gallery': inner=renderGalleryContent(block);break;
+    case 'timer': case 'eventTimer': inner=renderTimerContent(block);break;
+    case 'divider': inner=renderDividerContent(block);break;
+    case 'button': inner=renderButtonContent(block);break;
+    case 'quote': inner=renderQuoteContent(block);break;
+    case 'schedule': case 'timeline': inner=renderScheduleContent(block);break;
+    case 'map': inner=renderEmbedContent(block,'map');break;
+    case 'video': inner=renderEmbedContent(block,'video');break;
+    case 'spacer': inner=`<div class="block-spacer" style="height:${block.content.height||40}px"></div>`;break;
+    case 'custom':
+    case 'guestForm': inner=block.content.html||'';break;
+    case 'slider': inner=renderSliderContent(block);break;
+    default: inner=`<div style="padding:10px;color:#999;text-align:center">[${block.type}]</div>`;
+  }
+  return `<div class="nested-canvas-block${selected}" data-id="${block.id}"><div class="nested-block-label">${name}</div>${inner}</div>`;
 }
 
 function renderTimerContent(block){
@@ -1237,6 +1399,20 @@ function renderContentProps(panel,block){
       (block.content.items||[]).forEach((item,idx)=>{
         const card=document.createElement('div');
         card.style.border='1px solid var(--brd)';card.style.borderRadius='10px';card.style.padding='8px';card.style.marginBottom='8px';
+        const child=item.childId?getBlock(item.childId):null;
+        const childHint=document.createElement('div');
+        childHint.style.fontSize='11px';
+        childHint.style.color='var(--tx3)';
+        childHint.style.marginBottom='6px';
+        childHint.textContent=child?`Вложен блок: ${(BLOCK_DEFS[child.type]||{name:child.type}).name}`:'Слот пуст. Перетащите блок в ячейку.';
+        card.appendChild(childHint);
+        if(child){
+          const clearBtn=document.createElement('button');
+          clearBtn.className='prop-btn';
+          clearBtn.textContent='Очистить слот';
+          clearBtn.onclick=()=>{child.parentId=null;item.childId=null;saveHistory();fullRender();autoSave();};
+          card.appendChild(clearBtn);
+        }
         addRow(card,`Блок ${idx+1}`,makeInput('text',item.title||'',(v)=>{item.title=v;renderCanvas()}));
         addRow(card,'Текст',makeTextarea(item.text||'',(v)=>{item.text=v;renderCanvas()},2),false);
         addRow(card,'Фон',makeColorRow(item.bg||'#fafafa',(v)=>{item.bg=v;renderCanvas()}),false);
@@ -1391,6 +1567,17 @@ function renderPositionProps(panel,block){
 // ---- Actions Props ----
 function renderActionsProps(panel,block){
   const{group,body}=createPropGroup('Действия');
+  if(block.parentId){
+    const outBtn=document.createElement('button');
+    outBtn.className='prop-btn';
+    outBtn.textContent='↗ Вынести из контейнера';
+    outBtn.onclick=()=>{
+      detachBlockFromContainer(block.id);
+      block.parentId=null;
+      saveHistory();fullRender();autoSave();
+    };
+    body.appendChild(outBtn);
+  }
   const dupBtn=document.createElement('button');dupBtn.className='prop-btn';dupBtn.textContent='📋 Дублировать';dupBtn.onclick=()=>duplicateBlock(block.id);
   body.appendChild(dupBtn);
   const upBtn=document.createElement('button');upBtn.className='prop-btn';upBtn.textContent='↑ Переместить выше';upBtn.onclick=()=>{moveBlockUp(block.id);renderProperties()};
@@ -1607,9 +1794,10 @@ function applyTemplate(key){
   state.canvas=data.canvas;
   state.layoutMode=data.layoutMode||'flow';
   state.blocks=data.blocks.map(b=>{
-    b.id=uid();b.visible=true;b.locked=false;b.x=b.x||50;b.y=b.y||50;b.w=b.w||'100%';b.h=b.h||'auto';
+    b.id=uid();b.visible=true;b.locked=false;b.parentId=null;b.x=b.x||50;b.y=b.y||50;b.w=b.w||'100%';b.h=b.h||'auto';
     return b;
   });
+  normalizeBlocksHierarchy();
   state.selectedId=null;
   saveHistory();fullRender();autoSave();closeModal();
   toast('✅ Шаблон «'+tmpl.name+'» применён');
@@ -1632,7 +1820,8 @@ function applySavedTemplate(index){
   const data=deepClone(tmpl.data);
   state.canvas=data.canvas;
   state.layoutMode=data.layoutMode||'flow';
-  state.blocks=data.blocks.map(b=>{if(!b.id)b.id=uid();return b});
+  state.blocks=data.blocks.map(b=>{if(!b.id)b.id=uid();if(b.parentId===undefined)b.parentId=null;return b});
+  normalizeBlocksHierarchy();
   state.selectedId=null;
   saveHistory();fullRender();autoSave();closeModal();
   toast('✅ Шаблон применён');
@@ -1767,6 +1956,7 @@ function loadAutoSave(){
     const data=JSON.parse(localStorage.getItem('wedding_designer_autosave'));
     if(data&&data.state){
       state.blocks=data.state.blocks||[];
+      normalizeBlocksHierarchy();
       state.canvas=normalizeCanvas(data.state.canvas||state.canvas);
       state.layoutMode=data.state.layoutMode||'flow';
       state.projectName=data.state.projectName||'Мое приглашение';
@@ -1802,6 +1992,7 @@ function loadProjectFile(){
         const data=JSON.parse(ev.target.result);
         if(data.state){
           state.blocks=data.state.blocks||[];
+          normalizeBlocksHierarchy();
           state.canvas=normalizeCanvas(data.state.canvas||state.canvas);
           state.layoutMode=data.state.layoutMode||'flow';
           state.projectName=data.state.projectName||data.name||'Мое приглашение';
@@ -1883,7 +2074,7 @@ ${state.canvas.cursorStyle==='star'?'*{cursor:url("data:image/svg+xml,%3Csvg xml
 <div class="invitation">
 `;
 
-  state.blocks.forEach((block,i)=>{
+  getTopLevelBlocks().forEach((block,i)=>{
     if(block.visible===false)return;
     html+=exportBlock(block,i);
   });
@@ -1934,16 +2125,16 @@ function exportHTML(){
   toast('🚀 HTML экспортирован!');
 }
 
-function exportBlock(block,index){
+function exportBlock(block,index,nested=false){
   const s=block.style||{};
   const c=block.content||{};
   let style='';
 
-  if(state.layoutMode==='free'){
+  if(state.layoutMode==='free'&&!nested){
     style+=`position:absolute;left:${block.x||0}px;top:${block.y||0}px;`;
     if(block.w)style+=`width:${typeof block.w==='number'?block.w+'px':block.w};`;
   }
-  if(state.layoutMode==='flow'&&s.columnSpan)style+=`grid-column:span ${Math.max(1,s.columnSpan)};`;
+  if(state.layoutMode==='flow'&&s.columnSpan&&!nested)style+=`grid-column:span ${Math.max(1,s.columnSpan)};`;
   if(s.padding!==undefined)style+=`padding:${s.padding}px;`;
   if(s.backgroundColor&&s.backgroundColor!=='transparent')style+=`background-color:${s.backgroundColor};`;
   if(s.backgroundImage)style+=`background-image:url('${s.backgroundImage}');background-size:${s.backgroundSize||'cover'};background-position:${s.backgroundPosition||'center'};background-repeat:no-repeat;`;
@@ -2058,7 +2249,14 @@ function exportBlock(block,index){
       const areas=cfg.areas.map(r=>`"${r}"`).join(' ');
       const areaNames=getContainerAreaNames(layoutKey);
       inner=`<div class="container-grid" style="gap:${gap}px;grid-template-columns:${cfg.columns};grid-template-areas:${areas};">`;
-      c.items.forEach((item,idx)=>{const area=areaNames[idx]||`slot${idx+1}`;inner+=`<div class="container-grid-item" style="grid-area:${area};background:${item.bg||'#fafafa'}"><div class="container-grid-item-title">${item.title||`Блок ${idx+1}`}</div><div class="container-grid-item-text">${(item.text||'').replace(/\n/g,'<br>')}</div></div>`;});
+      c.items.forEach((item,idx)=>{
+        const area=areaNames[idx]||`slot${idx+1}`;
+        const child=item.childId?getBlock(item.childId):null;
+        inner+=`<div class="container-grid-item" style="grid-area:${area};background:${item.bg||'#fafafa'}">`;
+        if(child&&child.visible!==false)inner+=exportBlock(child,idx,true);
+        else inner+=`<div class="container-grid-item-title">${item.title||`Блок ${idx+1}`}</div><div class="container-grid-item-text">${(item.text||'').replace(/\n/g,'<br>')}</div>`;
+        inner+='</div>';
+      });
       inner+='</div>';
       break;
     }
@@ -2120,10 +2318,12 @@ function applyTemplateData(data){
   state.blocks=(d.blocks||[]).map(b=>{
     if(!b.id)b.id=uid();
     if(b.visible===undefined)b.visible=true;
+    if(b.parentId===undefined)b.parentId=null;
     if(!b.x)b.x=50;if(!b.y)b.y=50;
     if(!b.w)b.w='100%';if(!b.h)b.h='auto';
     return b;
   });
+  normalizeBlocksHierarchy();
   state.selectedId=null;
 }
 
