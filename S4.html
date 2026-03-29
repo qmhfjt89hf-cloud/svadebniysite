@@ -107,7 +107,7 @@ input,select,textarea{font-family:inherit;font-size:12px;outline:none;border:non
 .block-spacer{width:100%}
 .block-container-grid{display:grid;width:100%}
 .container-grid-item{min-height:120px;border:1px dashed rgba(0,0,0,.16);border-radius:12px;padding:14px;display:flex;flex-direction:column;justify-content:center;gap:8px;background:#fafafa;transition:border-color .2s,background-color .2s}
-.container-grid-item.drop-ready{border-color:var(--acc);background:#eef6ff}
+.block-container-grid.drop-ready .container-grid-item{border-color:var(--acc);background:#eef6ff}
 .container-grid-item.empty{align-items:center;text-align:center;color:#667;justify-content:center}
 .container-grid-item .nested-canvas-block{width:100%}
 .nested-canvas-block{position:relative;border:1px solid rgba(0,0,0,.08);border-radius:10px;padding:10px;background:#fff}
@@ -838,10 +838,10 @@ function renderCanvas(){
     el.addEventListener('click',(e)=>{e.stopPropagation();selectBlock(id);});
   });
 
-  canvas.querySelectorAll('.container-grid-item').forEach(containerEl=>{
+  canvas.querySelectorAll('.block-container-grid').forEach(containerEl=>{
     containerEl.addEventListener('dragover',(e)=>{
       const blockId=e.dataTransfer?.getData('text/plain');
-      const containerId=containerEl.dataset.containerId;
+      const containerId=containerEl.closest('.canvas-block')?.dataset.id;
       if(canDropBlockIntoContainer(blockId,containerId)){
         e.preventDefault();
         e.dataTransfer.dropEffect='move';
@@ -853,7 +853,7 @@ function renderCanvas(){
       e.preventDefault();
       containerEl.classList.remove('drop-ready');
       const blockId=e.dataTransfer?.getData('text/plain');
-      const containerId=containerEl.dataset.containerId;
+      const containerId=containerEl.closest('.canvas-block')?.dataset.id;
       if(addBlockToContainer(blockId,containerId)){
         saveHistory();
         fullRender();
@@ -870,6 +870,8 @@ function renderCanvas(){
       animation:150,
       handle:'.block-drag-handle',
       ghostClass:'sortable-ghost',
+      filter:'.block-container-grid, .block-container-grid *',
+      onMove:(evt)=>!evt.related?.closest('.block-container-grid'),
       onEnd:(evt)=>{
         const roots=getRootBlocks();
         const moved=roots[evt.oldIndex];
